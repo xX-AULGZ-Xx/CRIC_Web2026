@@ -5,8 +5,10 @@ allowBuilds:
   '@prisma/engines': true
   esbuild: true
   prisma: true
+  unrs-resolver: true
 onlyBuiltDependencies:
   - '@prisma/engines'
   - 'prisma'
   - 'esbuild'
   - 'workerd'
+  - 'unrs-resolver'
