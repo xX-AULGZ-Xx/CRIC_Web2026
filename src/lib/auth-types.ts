@@ -22,6 +22,7 @@ export function hasModuleAccess(session: UserSession | null, moduleKey: string):
     sliders: ['sliders.php'],
     pages: ['pages.php'],
     settings: ['settings.php'],
+    database: ['database.php', 'backups.php'],
   }
 
   const allowed = session.allowed_pages || []

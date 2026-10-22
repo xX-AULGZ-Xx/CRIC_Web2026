@@ -17,6 +17,7 @@ import {
   Settings,
   UserCog,
   History,
+  Database,
   LogOut,
   ExternalLink,
 } from 'lucide-react'
@@ -41,6 +42,7 @@ export function AdminSidebar({ session }: AdminSidebarProps) {
     { label: 'แบนเนอร์สไลด์', href: '/admin/sliders', icon: Sliders, module: 'sliders' },
     { label: 'หน้าคงที่ (Pages)', href: '/admin/pages', icon: FileText, module: 'pages' },
     { label: 'ตั้งค่าเว็บไซต์', href: '/admin/settings', icon: Settings, module: 'settings' },
+    { label: 'ย้ายข้อมูล & สำรอง', href: '/admin/database', icon: Database, module: 'database' },
     { label: 'ผู้ใช้งานระบบ', href: '/admin/users', icon: UserCog, module: 'users' },
     { label: 'ประวัติกิจกรรม (Logs)', href: '/admin/audit-logs', icon: History, module: 'logs' },
   ]

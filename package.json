@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "adm-zip": "^0.6.1",
     "bcryptjs": "^3.0.3",
     "jose": "^6.2.13",
     "lucide-react": "^1.61.0",
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
+    "@types/adm-zip": "^0.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
