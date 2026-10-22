@@ -1,0 +1,18 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: web_cric_upgrade
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mysql://root:%40cvcmedia2022@host.docker.internal:3306/cric_cms
+      - NEXTAUTH_SECRET=cric-secret-key-super-secure-change-in-prod
+      - NEXTAUTH_URL=http://localhost:3000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./public/uploads:/app/public/uploads

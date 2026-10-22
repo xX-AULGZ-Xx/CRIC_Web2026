@@ -1,3 +1,12 @@
+packages:
+  - '.'
 allowBuilds:
-  sharp: false
-  unrs-resolver: false
+  '@prisma/client': true
+  '@prisma/engines': true
+  esbuild: true
+  prisma: true
+onlyBuiltDependencies:
+  - '@prisma/engines'
+  - 'prisma'
+  - 'esbuild'
+  - 'workerd'

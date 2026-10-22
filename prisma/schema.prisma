@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model audit_logs {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  action      String    @db.VarChar(100)
+  target_type String    @db.VarChar(100)
+  target_id   Int?
+  details     String?   @db.Text
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  users       users     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "audit_logs_ibfk_1")
+
+  @@index([created_at], map: "idx_created")
+  @@index([user_id], map: "user_id")
+}
+
+model complaints {
+  id              Int                @id @default(autoincrement())
+  ticket_number   String             @unique(map: "ticket_number") @db.VarChar(20)
+  title           String             @db.VarChar(255)
+  type            complaints_type
+  description     String             @db.Text
+  accused_name    String?            @db.VarChar(255)
+  incident_date   DateTime?          @db.Date
+  reporter_name   String?            @db.VarChar(255)
+  reporter_email  String?            @db.VarChar(100)
+  reporter_phone  String?            @db.VarChar(50)
+  attachment_path String?            @db.VarChar(255)
+  status          complaints_status? @default(pending)
+  status_note     String?            @db.Text
+  is_published    Boolean?           @default(false)
+  created_at      DateTime?          @default(now()) @db.Timestamp(0)
+  updated_at      DateTime?          @default(now()) @db.Timestamp(0)
+}
+
+model curriculums {
+  id                Int       @id @default(autoincrement())
+  name              String    @db.VarChar(255)
+  level             String?   @default("ปวช.-ปวส.") @db.VarChar(50)
+  code              String?   @db.VarChar(50)
+  description       String?   @db.Text
+  qualification     String?   @db.Text
+  duration          String?   @db.VarChar(100)
+  image_path        String?   @db.VarChar(255)
+  file_path         String?   @db.VarChar(255)
+  website_url       String?   @db.VarChar(255)
+  gallery_images    String?   @db.Text
+  career_guidelines String?   @db.Text
+  created_at        DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model download_categories {
+  id        Int         @id @default(autoincrement())
+  name      String      @db.VarChar(100)
+  order_num Int?        @default(0)
+  downloads downloads[]
+}
+
+model downloads {
+  id                  Int                 @id @default(autoincrement())
+  category_id         Int
+  title               String              @db.VarChar(255)
+  file_path           String              @db.VarChar(255)
+  file_type           String?             @db.VarChar(50)
+  file_size           Int?                @default(0)
+  downloads_count     Int?                @default(0)
+  created_at          DateTime?           @default(now()) @db.Timestamp(0)
+  download_categories download_categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "downloads_ibfk_1")
+
+  @@index([category_id], map: "category_id")
+}
+
+model galleries {
+  id             Int              @id @default(autoincrement())
+  title          String           @db.VarChar(255)
+  description    String?          @db.Text
+  cover_image    String?          @db.VarChar(255)
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  gallery_images gallery_images[]
+  news           news[]
+}
+
+model gallery_images {
+  id         Int       @id @default(autoincrement())
+  gallery_id Int
+  image_path String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  galleries  galleries @relation(fields: [gallery_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "gallery_images_ibfk_1")
+
+  @@index([gallery_id], map: "gallery_id")
+  @@index([gallery_id], map: "idx_gallery")
+}
+
+model ita_banners {
+  id            Int       @id @default(autoincrement())
+  url           String    @db.VarChar(255)
+  original_name String    @db.VarChar(255)
+  created_at    DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model ita_items {
+  id             Int         @id @default(autoincrement())
+  table_id       Int
+  item_code      String      @db.VarChar(50)
+  info_detail    String?     @db.Text
+  element_detail String?     @db.Text
+  order_no       Int?        @default(0)
+  created_at     DateTime?   @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?   @default(now()) @db.Timestamp(0)
+  ita_tables     ita_tables  @relation(fields: [table_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ita_items_ibfk_1")
+  ita_links      ita_links[]
+
+  @@index([table_id], map: "table_id")
+}
+
+model ita_links {
+  id         Int                  @id @default(autoincrement())
+  item_id    Int
+  link_type  ita_links_link_type? @default(url)
+  url        String               @db.Text
+  file_size  Int?
+  mime_type  String?              @db.VarChar(100)
+  link_name  String?              @db.VarChar(255)
+  created_at DateTime?            @default(now()) @db.Timestamp(0)
+  ita_items  ita_items            @relation(fields: [item_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ita_links_ibfk_1")
+
+  @@index([item_id], map: "item_id")
+}
+
+model ita_main_topics {
+  id             Int              @id @default(autoincrement())
+  name           String           @db.VarChar(255)
+  order_no       Int?             @default(0)
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?        @default(now()) @db.Timestamp(0)
+  year           Int              @default(2569)
+  ita_sub_topics ita_sub_topics[]
+}
+
+model ita_sub_topics {
+  id              Int             @id @default(autoincrement())
+  main_topic_id   Int
+  code            String          @db.VarChar(50)
+  name            String          @db.VarChar(255)
+  order_no        Int?            @default(0)
+  created_at      DateTime?       @default(now()) @db.Timestamp(0)
+  updated_at      DateTime?       @default(now()) @db.Timestamp(0)
+  ita_main_topics ita_main_topics @relation(fields: [main_topic_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ita_sub_topics_ibfk_1")
+  ita_tables      ita_tables[]
+
+  @@index([main_topic_id], map: "main_topic_id")
+}
+
+model ita_tables {
+  id             Int            @id @default(autoincrement())
+  sub_topic_id   Int
+  name           String         @db.VarChar(255)
+  order_no       Int?           @default(0)
+  created_at     DateTime?      @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?      @default(now()) @db.Timestamp(0)
+  ita_items      ita_items[]
+  ita_sub_topics ita_sub_topics @relation(fields: [sub_topic_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "ita_tables_ibfk_1")
+
+  @@index([sub_topic_id], map: "sub_topic_id")
+}
+
+model media {
+  id          Int       @id @default(autoincrement())
+  file_name   String    @db.VarChar(255)
+  file_path   String    @db.VarChar(255)
+  file_type   String    @db.VarChar(100)
+  file_size   Int
+  uploaded_by Int
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  users       users     @relation(fields: [uploaded_by], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "media_ibfk_1")
+
+  @@index([uploaded_by], map: "uploaded_by")
+}
+
+model navbars {
+  id            Int       @id @default(autoincrement())
+  parent_id     Int?
+  label         String    @db.VarChar(100)
+  url           String    @db.VarChar(255)
+  icon          String?   @db.VarChar(100)
+  order_num     Int?      @default(0)
+  is_active     Boolean?  @default(true)
+  target_blank  Boolean?  @default(false)
+  navbars       navbars?  @relation("navbarsTonavbars", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "navbars_ibfk_1")
+  other_navbars navbars[] @relation("navbarsTonavbars")
+
+  @@index([parent_id], map: "parent_id")
+}
+
+model news {
+  id                Int             @id @default(autoincrement())
+  title             String          @db.VarChar(255)
+  slug              String          @unique(map: "slug") @db.VarChar(255)
+  content           String?         @db.LongText
+  cover_image       String?         @db.VarChar(255)
+  category_id       Int
+  status            news_status?    @default(draft)
+  views             Int?            @default(0)
+  author_id         Int
+  created_at        DateTime?       @default(now()) @db.Timestamp(0)
+  updated_at        DateTime?       @default(now()) @db.Timestamp(0)
+  gallery_id        Int?
+  additional_images String?         @db.Text
+  pdf_path          String?         @db.VarChar(255)
+  meta_title        String?         @db.VarChar(255)
+  meta_description  String?         @db.Text
+  cover_position    String?         @default("50%") @db.VarChar(50)
+  galleries         galleries?      @relation(fields: [gallery_id], references: [id], onUpdate: Restrict, map: "fk_news_gallery")
+  news_categories   news_categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "news_ibfk_1")
+  users             users           @relation(fields: [author_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "news_ibfk_2")
+  news_tags         news_tags[]
+
+  @@index([author_id], map: "author_id")
+  @@index([category_id], map: "category_id")
+  @@index([gallery_id], map: "fk_news_gallery")
+  @@index([slug], map: "idx_slug")
+  @@index([status, created_at], map: "idx_status_created")
+}
+
+model news_categories {
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(100)
+  slug String @unique(map: "slug") @db.VarChar(100)
+  news news[]
+}
+
+model news_tags {
+  news_id  Int
+  tag_name String @db.VarChar(255)
+  news     news   @relation(fields: [news_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "news_tags_ibfk_1")
+
+  @@id([news_id, tag_name])
+}
+
+model personnel {
+  id                       Int                        @id @default(autoincrement())
+  category_id              Int
+  curriculum_id            Int?
+  name                     String                     @db.VarChar(150)
+  academic_standing        String?                    @db.VarChar(150)
+  position                 String                     @db.VarChar(150)
+  special_duty             String?                    @db.VarChar(255)
+  details                  String?                    @db.Text
+  contact_info             String?                    @db.Text
+  image_path               String?                    @db.VarChar(255)
+  order_num                Int?                       @default(0)
+  is_active                Boolean?                   @default(true)
+  is_head                  Boolean?                   @default(false)
+  is_executive             Boolean?                   @default(false)
+  personnel_categories     personnel_categories       @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "personnel_ibfk_1")
+  personnel_position_links personnel_position_links[]
+  personnel_special_duties personnel_special_duties[]
+
+  @@index([category_id], map: "category_id")
+  @@index([is_active], map: "idx_active")
+  @@index([category_id, is_active], map: "idx_cat_active")
+}
+
+model personnel_categories {
+  id                         Int                        @id @default(autoincrement())
+  name                       String                     @db.VarChar(100)
+  order_num                  Int?                       @default(0)
+  parent_id                  Int?
+  personnel                  personnel[]
+  personnel_categories       personnel_categories?      @relation("personnel_categoriesTopersonnel_categories", fields: [parent_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "personnel_categories_ibfk_1")
+  other_personnel_categories personnel_categories[]     @relation("personnel_categoriesTopersonnel_categories")
+  personnel_special_duties   personnel_special_duties[]
+
+  @@index([parent_id], map: "parent_id")
+}
+
+model personnel_position_links {
+  personnel_id        Int
+  position_id         Int
+  personnel           personnel           @relation(fields: [personnel_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "personnel_position_links_ibfk_1")
+  personnel_positions personnel_positions @relation(fields: [position_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "personnel_position_links_ibfk_2")
+
+  @@id([personnel_id, position_id])
+  @@index([position_id], map: "position_id")
+}
+
+model personnel_positions {
+  id                       Int                        @id @default(autoincrement())
+  name                     String                     @unique(map: "name") @db.VarChar(150)
+  order_num                Int?                       @default(0)
+  personnel_position_links personnel_position_links[]
+}
+
+model personnel_special_duties {
+  id                   Int                  @id @default(autoincrement())
+  personnel_id         Int
+  category_id          Int
+  special_position     String?              @db.VarChar(255)
+  is_head              Boolean?             @default(false)
+  personnel            personnel            @relation(fields: [personnel_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "personnel_special_duties_ibfk_1")
+  personnel_categories personnel_categories @relation(fields: [category_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "personnel_special_duties_ibfk_2")
+
+  @@index([category_id], map: "category_id")
+  @@index([personnel_id], map: "personnel_id")
+}
+
+model settings {
+  setting_key   String  @id @db.VarChar(50)
+  setting_value String? @db.Text
+}
+
+model sliders {
+  id         Int       @id @default(autoincrement())
+  image_path String    @db.VarChar(255)
+  title      String?   @db.VarChar(255)
+  subtitle   String?   @db.VarChar(255)
+  link       String?   @db.VarChar(255)
+  order_num  Int?      @default(0)
+  is_active  Boolean?  @default(true)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  fit_width  Boolean?  @default(false)
+}
+
+model static_pages {
+  id               Int       @id @default(autoincrement())
+  slug             String    @unique(map: "slug") @db.VarChar(100)
+  title            String    @db.VarChar(255)
+  content          String?   @db.LongText
+  meta_title       String?   @db.VarChar(255)
+  meta_description String?   @db.Text
+  updated_at       DateTime? @default(now()) @db.Timestamp(0)
+  blocks_data      String?   @db.LongText
+  featured_image   String?   @db.VarChar(255)
+  layout           String?   @default("container") @db.VarChar(50)
+  subtitle         String?   @db.VarChar(255)
+}
+
+model users {
+  id            Int          @id @default(autoincrement())
+  username      String       @unique(map: "username") @db.VarChar(50)
+  password      String       @db.VarChar(255)
+  email         String?      @db.VarChar(100)
+  role          users_role?  @default(staff)
+  created_at    DateTime?    @default(now()) @db.Timestamp(0)
+  allowed_pages String?      @db.Text
+  audit_logs    audit_logs[]
+  media         media[]
+  news          news[]
+}
+
+enum ita_links_link_type {
+  url
+  file
+  text
+}
+
+enum complaints_type {
+  corruption
+  misconduct
+}
+
+enum users_role {
+  admin
+  editor
+  staff
+}
+
+enum news_status {
+  draft
+  published
+}
+
+enum complaints_status {
+  pending
+  investigating
+  resolved
+  dismissed
+}
