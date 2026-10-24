@@ -24,80 +24,168 @@ export function getThemeClasses(color: string = 'orange') {
     primaryHover: string
     primaryText: string
     primaryBorder: string
+    primaryRing: string
     navBg: string
     footerBg: string
     gradient: string
+    headerGradient: string
     accentBg: string
+    accentText: string
+    badgeBg: string
+    hex: {
+      primary: string
+      primaryHover: string
+      primaryLight: string
+      primaryBorder: string
+      navBg: string
+    }
   }> = {
     orange: {
       primaryBg: 'bg-orange-600',
       primaryHover: 'hover:bg-orange-700',
       primaryText: 'text-orange-600',
       primaryBorder: 'border-orange-600',
+      primaryRing: 'focus:border-orange-500 focus:ring-orange-500',
       navBg: 'bg-orange-900',
       footerBg: 'bg-slate-900',
       gradient: 'from-orange-600 to-orange-800',
+      headerGradient: 'from-orange-950 via-slate-900 to-amber-950',
       accentBg: 'bg-orange-50',
+      accentText: 'text-orange-700',
+      badgeBg: 'bg-orange-500/20 text-orange-300 border-orange-400/30',
+      hex: {
+        primary: '#ea580c',
+        primaryHover: '#c2410c',
+        primaryLight: '#fff7ed',
+        primaryBorder: '#f97316',
+        navBg: '#7c2d12',
+      },
     },
     blue: {
       primaryBg: 'bg-blue-600',
       primaryHover: 'hover:bg-blue-700',
       primaryText: 'text-blue-600',
       primaryBorder: 'border-blue-600',
+      primaryRing: 'focus:border-blue-500 focus:ring-blue-500',
       navBg: 'bg-blue-900',
       footerBg: 'bg-slate-900',
       gradient: 'from-blue-600 to-blue-800',
+      headerGradient: 'from-blue-950 via-slate-900 to-sky-950',
       accentBg: 'bg-blue-50',
+      accentText: 'text-blue-700',
+      badgeBg: 'bg-blue-500/20 text-blue-300 border-blue-400/30',
+      hex: {
+        primary: '#2563eb',
+        primaryHover: '#1d4ed8',
+        primaryLight: '#eff6ff',
+        primaryBorder: '#3b82f6',
+        navBg: '#1e3a8a',
+      },
     },
     red: {
       primaryBg: 'bg-red-600',
       primaryHover: 'hover:bg-red-700',
       primaryText: 'text-red-600',
       primaryBorder: 'border-red-600',
+      primaryRing: 'focus:border-red-500 focus:ring-red-500',
       navBg: 'bg-red-900',
       footerBg: 'bg-slate-900',
       gradient: 'from-red-600 to-red-800',
+      headerGradient: 'from-red-950 via-slate-900 to-rose-950',
       accentBg: 'bg-red-50',
+      accentText: 'text-red-700',
+      badgeBg: 'bg-red-500/20 text-red-300 border-red-400/30',
+      hex: {
+        primary: '#dc2626',
+        primaryHover: '#b91c1c',
+        primaryLight: '#fef2f2',
+        primaryBorder: '#ef4444',
+        navBg: '#7f1d1d',
+      },
     },
     green: {
       primaryBg: 'bg-emerald-600',
       primaryHover: 'hover:bg-emerald-700',
       primaryText: 'text-emerald-600',
       primaryBorder: 'border-emerald-600',
+      primaryRing: 'focus:border-emerald-500 focus:ring-emerald-500',
       navBg: 'bg-emerald-950',
       footerBg: 'bg-slate-900',
       gradient: 'from-emerald-600 to-emerald-800',
+      headerGradient: 'from-emerald-950 via-slate-900 to-teal-950',
       accentBg: 'bg-emerald-50',
+      accentText: 'text-emerald-700',
+      badgeBg: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30',
+      hex: {
+        primary: '#059669',
+        primaryHover: '#047857',
+        primaryLight: '#ecfdf5',
+        primaryBorder: '#10b981',
+        navBg: '#064e3b',
+      },
     },
     purple: {
       primaryBg: 'bg-purple-600',
       primaryHover: 'hover:bg-purple-700',
       primaryText: 'text-purple-600',
       primaryBorder: 'border-purple-600',
+      primaryRing: 'focus:border-purple-500 focus:ring-purple-500',
       navBg: 'bg-purple-900',
       footerBg: 'bg-slate-900',
       gradient: 'from-purple-600 to-purple-800',
+      headerGradient: 'from-purple-950 via-slate-900 to-violet-950',
       accentBg: 'bg-purple-50',
+      accentText: 'text-purple-700',
+      badgeBg: 'bg-purple-500/20 text-purple-300 border-purple-400/30',
+      hex: {
+        primary: '#9333ea',
+        primaryHover: '#7e22ce',
+        primaryLight: '#faf5ff',
+        primaryBorder: '#a855f7',
+        navBg: '#581c87',
+      },
     },
     indigo: {
       primaryBg: 'bg-indigo-600',
       primaryHover: 'hover:bg-indigo-700',
       primaryText: 'text-indigo-600',
       primaryBorder: 'border-indigo-600',
+      primaryRing: 'focus:border-indigo-500 focus:ring-indigo-500',
       navBg: 'bg-indigo-950',
       footerBg: 'bg-slate-900',
       gradient: 'from-indigo-600 to-indigo-800',
+      headerGradient: 'from-indigo-950 via-slate-900 to-blue-950',
       accentBg: 'bg-indigo-50',
+      accentText: 'text-indigo-700',
+      badgeBg: 'bg-indigo-500/20 text-indigo-300 border-indigo-400/30',
+      hex: {
+        primary: '#4f46e5',
+        primaryHover: '#4338ca',
+        primaryLight: '#eef2ff',
+        primaryBorder: '#6366f1',
+        navBg: '#1e1b4b',
+      },
     },
     slate: {
       primaryBg: 'bg-slate-700',
       primaryHover: 'hover:bg-slate-800',
       primaryText: 'text-slate-700',
       primaryBorder: 'border-slate-700',
+      primaryRing: 'focus:border-slate-600 focus:ring-slate-600',
       navBg: 'bg-slate-900',
       footerBg: 'bg-slate-950',
       gradient: 'from-slate-700 to-slate-900',
+      headerGradient: 'from-slate-950 via-slate-900 to-zinc-950',
       accentBg: 'bg-slate-100',
+      accentText: 'text-slate-800',
+      badgeBg: 'bg-slate-500/20 text-slate-300 border-slate-400/30',
+      hex: {
+        primary: '#334155',
+        primaryHover: '#1e293b',
+        primaryLight: '#f1f5f9',
+        primaryBorder: '#475569',
+        navBg: '#0f172a',
+      },
     },
   }
 
@@ -160,6 +248,28 @@ export interface NavItem {
   icon?: string | null
   target_blank: boolean
   children?: NavItem[]
+}
+
+export function isMaintenanceActive(
+  settings: SiteSettings,
+  pageIdentifiers?: string[]
+): boolean {
+  const mode = settings.maintenance_mode
+  if (!mode || mode === '0') return false
+  if (mode === '1' || mode === 'all') return true
+  if (mode === 'specific' && pageIdentifiers && pageIdentifiers.length > 0) {
+    const rawList = (settings.maintenance_pages || '')
+      .split(',')
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean)
+    const lowerPageIds = pageIdentifiers.map((p) => p.toLowerCase())
+    return rawList.some(
+      (m) =>
+        lowerPageIds.includes(m) ||
+        lowerPageIds.includes(m.replace('.php', ''))
+    )
+  }
+  return false
 }
 
 export async function getNavTree(): Promise<NavItem[]> {

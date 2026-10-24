@@ -1,266 +1,274 @@
-import React from 'react'
-import Image from 'next/image'
-import Link from 'next/link'
-import prisma from '@/lib/prisma'
-import { getSettings, getThemeClasses } from '@/lib/settings'
-import { User, Phone, Mail, Award, Users, Search } from 'lucide-react'
+import React from 'react';
+import Link from 'next/link';
+import { Users, Home, ChevronRight } from 'lucide-react';
+import prisma from '@/lib/prisma';
+import { getSettings, isMaintenanceActive } from '@/lib/settings';
+import { getSession } from '@/lib/auth';
+import MaintenanceView from '@/components/public/MaintenanceView';
+import PersonnelDirectoryClient, {
+  PersonnelCardData,
+  PositionCountItem,
+  MainDepartmentItem,
+} from '@/components/public/PersonnelDirectoryClient';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
-interface Props {
-  searchParams: Promise<{
-    dept?: string
-    q?: string
-  }>
+function parseContactInfo(raw: string | null | undefined): {
+  email: string;
+  phone: string;
+} {
+  let email = '';
+  let phone = '';
+  if (!raw) return { email, phone };
+
+  const lines = raw.split(/\r?\n|,/).map((l) => l.trim());
+  for (const line of lines) {
+    if (line.includes('@')) {
+      email = line;
+    } else if (/[\d-]{9,}/.test(line)) {
+      phone = line.replace(/(โทร\.?|เบอร์โทร\.?)/g, '').trim();
+    }
+  }
+  return { email, phone };
 }
 
-export default async function PersonnelPage(props: Props) {
-  const searchParams = await props.searchParams
-  const deptFilter = searchParams.dept
-  const searchQuery = (searchParams.q || '').trim()
+export default async function PersonnelPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dept?: string }>;
+}) {
+  const settings = await getSettings();
+  const session = await getSession();
+  const sp = await searchParams;
 
-  const [settings, categories, allPersonnel, specialDuties] = await Promise.all([
-    getSettings(),
-    prisma.personnel_categories.findMany({
-      orderBy: { order_num: 'asc' },
-    }),
-    prisma.personnel.findMany({
-      where: { is_active: true },
-      include: {
-        personnel_categories: true,
-      },
-      orderBy: [
-        { is_executive: 'desc' },
-        { order_num: 'asc' },
-        { id: 'asc' },
-      ],
-    }),
-    prisma.personnel_special_duties.findMany({
-      include: {
-        personnel_categories: true,
-      },
-    }),
-  ])
-
-  const theme = getThemeClasses(settings.theme_color)
-
-  // Map special duties by personnel_id
-  const dutiesMap = new Map<number, any[]>()
-  for (const duty of specialDuties) {
-    if (!dutiesMap.has(duty.personnel_id)) {
-      dutiesMap.set(duty.personnel_id, [])
-    }
-    dutiesMap.get(duty.personnel_id)!.push(duty)
+  if (!session && isMaintenanceActive(settings, ['personnel.php', 'personnel'])) {
+    return <MaintenanceView settings={settings} />;
   }
 
-  // Filter personnel
-  let filtered = allPersonnel
-  if (deptFilter) {
-    const deptId = parseInt(deptFilter, 10)
-    if (!isNaN(deptId)) {
-      filtered = filtered.filter((p) => p.category_id === deptId)
-    }
+  const initialDeptId = sp.dept ? parseInt(sp.dept, 10) : null;
+
+  const [rawPersonnel, curriculums, definedPositions, allCategories] =
+    await Promise.all([
+      prisma.personnel.findMany({
+        where: { is_active: true },
+        include: {
+          personnel_categories: {
+            include: {
+              personnel_categories: true, // Parent category
+            },
+          },
+          personnel_position_links: {
+            include: {
+              personnel_positions: true,
+            },
+          },
+          personnel_special_duties: {
+            orderBy: { id: 'asc' },
+          },
+        },
+        orderBy: [{ order_num: 'asc' }, { id: 'asc' }],
+      }),
+      prisma.curriculums.findMany({
+        select: { id: true, name: true },
+      }),
+      prisma.personnel_positions.findMany({
+        orderBy: [{ order_num: 'asc' }, { id: 'asc' }],
+      }),
+      prisma.personnel_categories.findMany({
+        orderBy: [{ order_num: 'asc' }, { id: 'asc' }],
+      }),
+    ]);
+
+  const curriculumMap = new Map<number, string>();
+  for (const c of curriculums) {
+    curriculumMap.set(c.id, c.name);
   }
 
-  if (searchQuery) {
-    filtered = filtered.filter(
-      (p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.position.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  }
-
-  // Group personnel by Category
-  const groupedCategories: {
-    category: any
-    members: typeof allPersonnel
-  }[] = []
-
-  if (deptFilter || searchQuery) {
-    // Show flat
-    groupedCategories.push({
-      category: {
-        name: deptFilter
-          ? categories.find((c) => c.id === parseInt(deptFilter, 10))?.name || 'บุคลากร'
-          : `ผลการค้นหา "${searchQuery}"`,
-      },
-      members: filtered,
+  // Build department hierarchy
+  const mainDepts: MainDepartmentItem[] = allCategories
+    .filter((c) => !c.parent_id)
+    .sort((a, b) => {
+      const aIsExec = a.name.includes('ผู้บริหาร') ? 0 : 1;
+      const bIsExec = b.name.includes('ผู้บริหาร') ? 0 : 1;
+      if (aIsExec !== bIsExec) return aIsExec - bIsExec;
+      const ordA = a.order_num ?? 999;
+      const ordB = b.order_num ?? 999;
+      if (ordA !== ordB) return ordA - ordB;
+      return a.id - b.id;
     })
-  } else {
-    // Group by category order
-    for (const cat of categories) {
-      const members = allPersonnel.filter((p) => p.category_id === cat.id)
-      if (members.length > 0) {
-        groupedCategories.push({
-          category: cat,
-          members,
-        })
+    .map((main) => ({
+      id: main.id,
+      name: main.name,
+      subDepartments: allCategories
+        .filter((sub) => sub.parent_id === main.id)
+        .map((sub) => ({ id: sub.id, name: sub.name })),
+    }));
+
+  // Transform personnel cards & count positions
+  const posCounter = new Map<string, number>();
+  for (const dp of definedPositions) {
+    posCounter.set(dp.name.trim(), 0);
+  }
+
+  const personnelList: PersonnelCardData[] = rawPersonnel.map((person) => {
+    const cat = person.personnel_categories;
+    const parentCat = cat?.personnel_categories || null;
+    const mainDeptName = parentCat ? parentCat.name : cat?.name || '';
+    const subDeptName = parentCat ? cat?.name || '' : '';
+
+    let deptTag = '';
+    if (mainDeptName && subDeptName) {
+      deptTag = `${mainDeptName} > ${subDeptName}`;
+    } else if (mainDeptName) {
+      deptTag = mainDeptName;
+    } else if (subDeptName) {
+      deptTag = subDeptName;
+    }
+
+    let formattedPosition = person.position || '';
+    if (person.is_executive && !formattedPosition.includes('ผู้อำนวยการ')) {
+      formattedPosition = 'ครู ทำหน้าที่รองผู้อำนวยการ';
+      if (mainDeptName && !formattedPosition.includes(mainDeptName)) {
+        if (mainDeptName.includes('ฝ่าย') || mainDeptName.includes('แผนก')) {
+          formattedPosition = `${formattedPosition} ${mainDeptName}`.trim();
+        }
+      }
+    } else if (
+      formattedPosition.includes('รองผู้อำนวยการ') &&
+      !formattedPosition.includes('รักษาการ')
+    ) {
+      if (
+        (person.order_num || 0) > 10 &&
+        !formattedPosition.includes('ทำหน้าที่')
+      ) {
+        formattedPosition = 'ทำหน้าที่รองผู้อำนวยการ';
+      }
+      if (mainDeptName && !formattedPosition.includes(mainDeptName)) {
+        formattedPosition = `${formattedPosition}${mainDeptName}`.trim();
+      }
+    } else if (
+      formattedPosition.includes('หัวหน้าแผนก') &&
+      subDeptName &&
+      !formattedPosition.includes(subDeptName)
+    ) {
+      formattedPosition = `หัวหน้า${subDeptName}`;
+    }
+
+    const allPosSet = new Set<string>();
+    if (person.position && person.position.trim()) {
+      allPosSet.add(person.position.trim());
+    }
+    for (const link of person.personnel_position_links) {
+      if (link.personnel_positions?.name) {
+        allPosSet.add(link.personnel_positions.name.trim());
       }
     }
-    // Also include any with null category
-    const uncat = allPersonnel.filter((p) => !p.category_id)
-    if (uncat.length > 0) {
-      groupedCategories.push({
-        category: { name: 'อื่นๆ' },
-        members: uncat,
-      })
-    }
-  }
+    const allPositions = Array.from(allPosSet);
 
-  const formatImagePath = (path: string) => {
-    if (path.startsWith('http://') || path.startsWith('https://')) return path
-    return path.startsWith('/') ? path : `/${path}`
-  }
+    if (allPositions.length > 0) {
+      for (const pName of allPositions) {
+        posCounter.set(pName, (posCounter.get(pName) || 0) + 1);
+      }
+    } else {
+      posCounter.set('ไม่ระบุตำแหน่ง', (posCounter.get('ไม่ระบุตำแหน่ง') || 0) + 1);
+    }
+
+    const extraDuties = person.personnel_special_duties
+      .map((d) => (d.special_position || '').trim())
+      .filter((d) => d && d !== (person.special_duty || '').trim());
+
+    const { email, phone } = parseContactInfo(person.contact_info);
+
+    return {
+      id: person.id,
+      name: person.name,
+      academic_standing: person.academic_standing,
+      position: person.position,
+      formattedPosition,
+      special_duty: person.special_duty,
+      extraDuties,
+      allPositions,
+      deptTag,
+      mainDeptId: parentCat ? parentCat.id : cat?.id || null,
+      subDeptId: parentCat ? cat?.id || null : null,
+      curriculumName: person.curriculum_id
+        ? curriculumMap.get(person.curriculum_id) || null
+        : null,
+      email,
+      phone,
+      image_path: person.image_path,
+      is_head: Boolean(person.is_head),
+      is_executive: Boolean(person.is_executive),
+    };
+  });
+
+  // Sort with Executives first (Director -> Deputy -> Acting Deputy / Executive -> Others)
+  personnelList.sort((a, b) => {
+    const getPrio = (p: typeof a) => {
+      const pos = (p.position || '').trim();
+      if (pos.includes('ผู้อำนวยการ') && !pos.includes('รอง')) return 1;
+      if (pos.includes('รองผู้อำนวยการ')) return 2;
+      if (p.is_executive) return 3;
+      return 4;
+    };
+    const prioA = getPrio(a);
+    const prioB = getPrio(b);
+    if (prioA !== prioB) return prioA - prioB;
+    return a.id - b.id;
+  });
+
+  const positionCounts: PositionCountItem[] = Array.from(posCounter.entries())
+    .filter(([, count]) => count > 0)
+    .map(([name, count]) => ({ name, count }));
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-          ทำเนียบบุคลากร
-        </h1>
-        <p className="text-sm text-slate-500 mt-1.5">
-          คณะผู้บริหาร ครู และบุคลากรทางการศึกษา วิทยาลัยการอาชีพเชียงราย (รวมทั้งหมด {allPersonnel.length} ท่าน)
-        </p>
-      </div>
+    <>
+      {/* Page Header */}
+      <section className="relative bg-slate-900 py-16 md:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-950/80 via-slate-900 to-amber-950/80 z-0"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 z-0"></div>
 
-      {/* Filter Tabs & Search */}
-      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 mb-10">
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
-          <Link
-            href="/personnel"
-            className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
-              !deptFilter && !searchQuery
-                ? `${theme.primaryBg} text-white shadow-sm`
-                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            ทั้งหมด
-          </Link>
-          {categories.map((cat) => {
-            const active = deptFilter === String(cat.id)
-            return (
-              <Link
-                key={cat.id}
-                href={`/personnel?dept=${cat.id}`}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
-                  active
-                    ? `${theme.primaryBg} text-white shadow-sm`
-                    : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                {cat.name}
-              </Link>
-            )
-          })}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300 text-xs font-bold mb-4 uppercase tracking-wider backdrop-blur-sm">
+            <Users className="w-3.5 h-3.5" /> Personnel Directory
+          </div>
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-4">
+            ทำเนียบบุคลากรทั้งหมด
+          </h1>
+          <p className="text-slate-300 max-w-2xl mx-auto text-base md:text-lg font-light">
+            รายชื่อคณะผู้บริหาร ครู อาจารย์ และบุคลากรทางการศึกษาทั้งหมดของ{' '}
+            {settings.site_name || 'สถานศึกษา'}
+          </p>
+
+          <nav className="flex justify-center mt-8" aria-label="Breadcrumb">
+            <ol className="inline-flex items-center space-x-1 md:space-x-3 bg-white/5 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 text-xs">
+              <li className="inline-flex items-center">
+                <Link
+                  href="/"
+                  className="text-slate-300 hover:text-white transition-colors flex items-center gap-1.5"
+                >
+                  <Home className="w-3.5 h-3.5" /> หน้าแรก
+                </Link>
+              </li>
+              <li>
+                <div className="flex items-center">
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-500 mx-1.5" />
+                  <span className="text-orange-300 font-medium">
+                    ทำเนียบบุคลากรทั้งหมด
+                  </span>
+                </div>
+              </li>
+            </ol>
+          </nav>
         </div>
+      </section>
 
-        <form action="/personnel" method="GET" className="flex items-center gap-2 max-w-sm w-full">
-          {deptFilter && <input type="hidden" name="dept" value={deptFilter} />}
-          <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              name="q"
-              defaultValue={searchQuery}
-              placeholder="ค้นหาชื่อหรือตำแหน่ง..."
-              className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-white border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition"
-            />
-          </div>
-          <button
-            type="submit"
-            className={`px-4 py-2 ${theme.primaryBg} text-white rounded-xl text-xs sm:text-sm font-bold transition hover:opacity-90`}
-          >
-            ค้นหา
-          </button>
-        </form>
-      </div>
-
-      {/* Grouped Personnel Sections */}
-      <div className="space-y-12">
-        {groupedCategories.map((group, gIdx) => (
-          <section key={gIdx} className="space-y-6">
-            <div className="flex items-center gap-3 border-b border-slate-200 pb-3">
-              <Users className="w-5 h-5 text-orange-600" />
-              <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
-                {group.category.name}
-              </h2>
-              <span className="text-xs text-slate-400 font-semibold bg-slate-100 px-2.5 py-0.5 rounded-full">
-                {group.members.length} ท่าน
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {group.members.map((person) => {
-                const duties = dutiesMap.get(person.id) || []
-
-                return (
-                  <div
-                    key={person.id}
-                    className="bg-white border border-slate-200/80 rounded-3xl p-5 shadow-xs hover:shadow-xl transition-all duration-300 flex flex-col items-center text-center group"
-                  >
-                    {/* Photo */}
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-orange-400/80 relative shadow-inner mb-4 group-hover:scale-105 transition duration-300">
-                      {person.image_path ? (
-                        <Image
-                          src={formatImagePath(person.image_path)}
-                          alt={person.name}
-                          fill
-                          className="object-cover object-top"
-                          sizes="112px"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                          <User className="w-10 h-10" />
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Name & Position */}
-                    <h3 className="font-extrabold text-slate-900 text-base leading-snug">
-                      {person.name}
-                    </h3>
-                    <p className={`text-xs ${theme.primaryText} font-bold mt-1 leading-tight`}>
-                      {person.position}
-                    </p>
-
-                    {/* Special Duties */}
-                    {duties.length > 0 && (
-                      <div className="flex flex-wrap justify-center gap-1 mt-2">
-                        {duties.map((d, dIdx) => (
-                          <span
-                            key={dIdx}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-50 text-orange-700 text-[10px] font-semibold rounded-md border border-orange-200/50"
-                          >
-                            <Award className="w-3 h-3" />
-                            <span>
-                              {d.special_position || d.personnel_categories?.name}
-                            </span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Contact Info */}
-                    {person.contact_info && (
-                      <div className="mt-4 pt-3 border-t border-slate-100 w-full text-[11px] text-slate-500 font-mono truncate">
-                        {person.contact_info}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-        ))}
-
-        {groupedCategories.length === 0 && (
-          <div className="py-20 text-center text-slate-400 bg-white border border-dashed border-slate-200 rounded-3xl">
-            <Users className="w-12 h-12 mx-auto mb-3 opacity-40" />
-            <p className="text-base font-semibold">ไม่พบบุคลากรตามเงื่อนไขที่เลือก</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+      <PersonnelDirectoryClient
+        personnelList={personnelList}
+        positionCounts={positionCounts}
+        departments={mainDepts}
+        initialDeptId={initialDeptId && !isNaN(initialDeptId) ? initialDeptId : null}
+      />
+    </>
+  );
 }

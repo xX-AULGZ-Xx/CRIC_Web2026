@@ -1,166 +1,117 @@
-import React from 'react'
-import Link from 'next/link'
-import prisma from '@/lib/prisma'
-import { getSettings, getThemeClasses } from '@/lib/settings'
-import { Download, FileText, Calendar, HardDrive, CheckCircle2 } from 'lucide-react'
+import React from 'react';
+import prisma from '@/lib/prisma';
+import { getSettings, isMaintenanceActive } from '@/lib/settings';
+import { getSession } from '@/lib/auth';
+import MaintenanceView from '@/components/public/MaintenanceView';
+import DownloadsClient, {
+  DownloadCategoryItem,
+  DownloadFileItem,
+} from '@/components/public/DownloadsClient';
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
 
-interface Props {
-  searchParams: Promise<{
-    category?: string
-  }>
+const THAI_MONTHS_SHORT = [
+  'ม.ค.',
+  'ก.พ.',
+  'มี.ค.',
+  'เม.ย.',
+  'พ.ค.',
+  'มิ.ย.',
+  'ก.ค.',
+  'ส.ค.',
+  'ก.ย.',
+  'ต.ค.',
+  'พ.ย.',
+  'ธ.ค.',
+];
+
+function formatDateEnShort(date: Date | null | undefined): string {
+  if (!date) return '';
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  return `${d.getDate()} ${THAI_MONTHS_SHORT[d.getMonth()] || ''} ${
+    d.getFullYear() + 543
+  }`;
 }
 
-export default async function DownloadsPage(props: Props) {
-  const searchParams = await props.searchParams
-  const catParam = searchParams.category
+function formatBytes(bytes: number | null | undefined): string | null {
+  if (!bytes || bytes <= 0) return null;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
 
-  const [settings, categories, allDownloads] = await Promise.all([
-    getSettings(),
+export default async function DownloadsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; search?: string }>;
+}) {
+  const settings = await getSettings();
+  const session = await getSession();
+  const sp = await searchParams;
+
+  if (!session && isMaintenanceActive(settings, ['download.php', 'downloads'])) {
+    return <MaintenanceView settings={settings} />;
+  }
+
+  const [rawCategories, rawFiles] = await Promise.all([
     prisma.download_categories.findMany({
-      orderBy: { order_num: 'asc' },
+      orderBy: [{ order_num: 'asc' }, { id: 'asc' }],
     }),
     prisma.downloads.findMany({
-      include: { download_categories: true },
+      include: {
+        download_categories: true,
+      },
       orderBy: { created_at: 'desc' },
     }),
-  ])
+  ]);
 
-  const theme = getThemeClasses(settings.theme_color)
+  const categories: DownloadCategoryItem[] = rawCategories.map((c) => ({
+    id: c.id,
+    name: c.name,
+    slug: String(c.id),
+  }));
 
-  const selectedCatId = catParam ? parseInt(catParam, 10) : undefined
-
-  const filtered = selectedCatId
-    ? allDownloads.filter((d) => d.category_id === selectedCatId)
-    : allDownloads
-
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return '0 B'
-    const units = ['B', 'KB', 'MB', 'GB']
-    let size = bytes
-    let unitIndex = 0
-    while (size >= 1024 && unitIndex < units.length - 1) {
-      size /= 1024
-      unitIndex++
-    }
-    return `${size.toFixed(1)} ${units[unitIndex]}`
-  }
-
-  const formatFilePath = (path: string) => {
-    if (path.startsWith('http://') || path.startsWith('https://')) return path
-    return path.startsWith('/') ? path : `/${path}`
-  }
+  const files: DownloadFileItem[] = rawFiles.map((f) => ({
+    id: f.id,
+    category_id: f.category_id,
+    category_name: f.download_categories?.name || 'เอกสารทั่วไป',
+    category_slug: String(f.category_id),
+    title: f.title,
+    description: null,
+    file_path: f.file_path,
+    file_type: f.file_type,
+    file_size: formatBytes(f.file_size),
+    downloads_count: f.downloads_count || 0,
+    created_at_formatted: formatDateEnShort(f.created_at),
+  }));
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12 w-full">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight flex items-center gap-3">
-          <Download className="w-8 h-8 text-orange-600" />
-          <span>ศูนย์ดาวน์โหลดเอกสาร</span>
-        </h1>
-        <p className="text-sm text-slate-500 mt-1.5">
-          ดาวน์โหลดแบบฟอร์ม ประกาศ ระเบียบ และเอกสารเผยแพร่ต่างๆ ของวิทยาลัย
-        </p>
-      </div>
+    <>
+      {/* Page Header */}
+      <section className="relative bg-slate-900 py-10 sm:py-16 md:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-950 via-slate-900 to-amber-950 z-0"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 z-0"></div>
 
-      {/* Category Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8">
-        <Link
-          href="/downloads"
-          className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
-            !selectedCatId
-              ? `${theme.primaryBg} text-white shadow-sm`
-              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-          }`}
-        >
-          ทั้งหมด ({allDownloads.length})
-        </Link>
-        {categories.map((cat) => {
-          const active = selectedCatId === cat.id
-          const count = allDownloads.filter((d) => d.category_id === cat.id).length
-          return (
-            <Link
-              key={cat.id}
-              href={`/downloads?category=${cat.id}`}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition ${
-                active
-                  ? `${theme.primaryBg} text-white shadow-sm`
-                  : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              {cat.name} ({count})
-            </Link>
-          )
-        })}
-      </div>
-
-      {/* Downloads List */}
-      <div className="bg-white border border-slate-200/80 rounded-3xl overflow-hidden shadow-xs divide-y divide-slate-100">
-        {filtered.map((item) => {
-          const fileUrl = formatFilePath(item.file_path)
-
-          return (
-            <div
-              key={item.id}
-              className="p-5 sm:p-6 hover:bg-slate-50/60 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-            >
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl shrink-0">
-                  <FileText className="w-6 h-6" />
-                </div>
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    {item.download_categories?.name || 'ทั่วไป'}
-                  </span>
-                  <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
-                    {item.title}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 pt-0.5">
-                    {item.created_at && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>{new Date(item.created_at).toLocaleDateString('th-TH')}</span>
-                      </span>
-                    )}
-                    {item.file_size ? (
-                      <span className="flex items-center gap-1">
-                        <HardDrive className="w-3.5 h-3.5" />
-                        <span>{formatFileSize(item.file_size)}</span>
-                      </span>
-                    ) : null}
-                    <span className="flex items-center gap-1">
-                      <Download className="w-3.5 h-3.5" />
-                      <span>{Number(item.downloads_count || 0).toLocaleString()} ครั้ง</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="sm:self-center shrink-0">
-                <a
-                  href={fileUrl}
-                  download
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 ${theme.primaryBg} text-white font-bold rounded-xl text-xs sm:text-sm shadow-xs hover:opacity-95 transition`}
-                >
-                  <Download className="w-4 h-4" />
-                  <span>ดาวน์โหลด</span>
-                </a>
-              </div>
-            </div>
-          )
-        })}
-
-        {filtered.length === 0 && (
-          <div className="py-20 text-center text-slate-400">
-            <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
-            <p className="text-base font-semibold">ไม่พบไฟล์เอกสารในหมวดหมู่นี้</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300 text-xs font-bold mb-3 sm:mb-4 uppercase tracking-wider backdrop-blur-sm">
+            <i className="fa-solid fa-cloud-arrow-down"></i> Document Center
           </div>
-        )}
-      </div>
-    </div>
-  )
+          <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-3 sm:mb-4">
+            ศูนย์ดาวน์โหลดเอกสาร
+          </h1>
+          <p className="text-slate-300 max-w-2xl mx-auto text-sm sm:text-base md:text-lg font-light px-2">
+            รวบรวมแบบฟอร์ม คู่มือ ระเบียบการ และเอกสารราชการสำหรับนักเรียน นักศึกษา และบุคลากร
+          </p>
+        </div>
+      </section>
+
+      <DownloadsClient
+        categories={categories}
+        files={files}
+        initialCategorySlug={sp.category || ''}
+        initialSearch={sp.search || ''}
+      />
+    </>
+  );
 }

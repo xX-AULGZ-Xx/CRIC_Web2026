@@ -1,13 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url)
-    const ticket = searchParams.get('ticket')?.trim()
-
+    const { searchParams } = new URL(req.url);
+    const ticket = (searchParams.get('ticket') || '').trim().toUpperCase();
     if (!ticket) {
-      return NextResponse.json({ error: 'กรุณาระบุเลขที่คำร้อง' }, { status: 400 })
+      return NextResponse.json(
+        { success: false, error: 'กรุณาระบุรหัส Ticket' },
+        { status: 400 }
+      );
     }
 
     const complaint = await prisma.complaints.findUnique({
@@ -21,17 +23,27 @@ export async function GET(req: NextRequest) {
         created_at: true,
         updated_at: true,
       },
-    })
+    });
 
     if (!complaint) {
-      return NextResponse.json({ error: 'ไม่พบข้อมูลคำร้องตามเลขที่ระบุ' }, { status: 404 })
+      return NextResponse.json(
+        {
+          success: false,
+          error: `ไม่พบข้อมูลคำร้องหมายเลข "${ticket}" กรุณาตรวจสอบรหัสอีกครั้ง`,
+        },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json({
       success: true,
       data: complaint,
-    })
-  } catch (error: any) {
-    return NextResponse.json({ error: 'เกิดข้อผิดพลาดในการตรวจสอบ' }, { status: 500 })
+    });
+  } catch (err) {
+    console.error('Complaint check error:', err);
+    return NextResponse.json(
+      { success: false, error: 'เกิดข้อผิดพลาดในการตรวจสอบสถานะ' },
+      { status: 500 }
+    );
   }
 }

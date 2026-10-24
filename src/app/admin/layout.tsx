@@ -1,7 +1,8 @@
 import React from 'react'
-import { redirect } from 'next/navigation'
 import { getSession } from '@/lib/auth'
-import { AdminSidebar } from '@/components/admin/AdminSidebar'
+import { getSettings } from '@/lib/settings'
+import prisma from '@/lib/prisma'
+import { AdminShell } from './AdminShell'
 
 export default async function AdminLayout({
   children,
@@ -10,19 +11,26 @@ export default async function AdminLayout({
 }) {
   const session = await getSession()
 
-  // Note: if user is not logged in, but on login page, page handles itself
-  // For protected admin pages:
   if (!session) {
-    // If we're inside /admin (except /admin/login), let login page pass
     return <>{children}</>
   }
 
+  const [settings, pendingComplaints] = await Promise.all([
+    getSettings(),
+    prisma.complaints.count({ where: { status: 'pending' } }).catch(() => 0),
+  ])
+
+  const siteName = settings.site_name || 'ศูนย์การศึกษาพิเศษ ประจำจังหวัดเชียงราย'
+  const immichUrl = settings.immich_server_url ? settings.immich_server_url.trim() : undefined
+
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-row">
-      <AdminSidebar session={session} />
-      <div className="grow flex flex-col min-h-screen overflow-x-hidden bg-slate-950">
-        <main className="p-6 sm:p-8 grow">{children}</main>
-      </div>
-    </div>
+    <AdminShell
+      session={session}
+      siteName={siteName}
+      pendingComplaints={pendingComplaints}
+      immichUrl={immichUrl}
+    >
+      {children}
+    </AdminShell>
   )
 }

@@ -1,79 +1,81 @@
-import { NextRequest, NextResponse } from 'next/server'
-import prisma from '@/lib/prisma'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import path from 'path';
+import fs from 'fs/promises';
 
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData()
-    const title = formData.get('title') as string
-    const type = (formData.get('type') as 'corruption' | 'misconduct') || 'corruption'
-    const description = formData.get('description') as string
-    const accusedName = (formData.get('accused_name') as string) || null
-    const incidentDateStr = formData.get('incident_date') as string
-    const reporterName = (formData.get('reporter_name') as string) || null
-    const reporterEmail = (formData.get('reporter_email') as string) || null
-    const reporterPhone = (formData.get('reporter_phone') as string) || null
-    const file = formData.get('attachment') as File | null
+    const formData = await req.formData();
+    const typeRaw = String(formData.get('type') || 'corruption');
+    const type = typeRaw === 'misconduct' ? 'misconduct' : 'corruption';
+    const title = String(formData.get('title') || '').trim();
+    const description = String(formData.get('description') || '').trim();
+    const accusedName = String(formData.get('accused_name') || '').trim() || null;
+    const incidentDateStr = String(formData.get('incident_date') || '').trim();
+    const reporterName = String(formData.get('reporter_name') || '').trim() || null;
+    const reporterPhone = String(formData.get('reporter_phone') || '').trim() || null;
+    const reporterEmail = String(formData.get('reporter_email') || '').trim() || null;
+    const attachment = formData.get('attachment') as File | null;
 
     if (!title || !description) {
       return NextResponse.json(
-        { error: 'กรุณากรอกหัวข้อเรื่องและรายละเอียดการร้องเรียน' },
+        { success: false, error: 'กรุณากรอกหัวข้อเรื่องและรายละเอียดให้ครบถ้วน' },
         { status: 400 }
-      )
+      );
     }
 
-    let attachmentPath: string | null = null
-    if (file && file.size > 0) {
-      const bytes = await file.arrayBuffer()
-      const buffer = Buffer.from(bytes)
-
-      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'complaints')
-      await mkdir(uploadDir, { recursive: true })
-
-      const ext = path.extname(file.name) || '.pdf'
-      const fileName = `complaint_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`
-      const filePath = path.join(uploadDir, fileName)
-
-      await writeFile(filePath, buffer)
-      attachmentPath = `uploads/complaints/${fileName}`
+    let attachmentPath: string | null = null;
+    if (attachment && attachment.size > 0) {
+      const ext = path.extname(attachment.name).toLowerCase();
+      const allowed = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.doc', '.docx', '.zip'];
+      if (!allowed.includes(ext)) {
+        return NextResponse.json(
+          { success: false, error: 'ชนิดไฟล์แนบไม่รองรับ' },
+          { status: 400 }
+        );
+      }
+      const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'complaints');
+      await fs.mkdir(uploadDir, { recursive: true });
+      const filename = `cmp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}${ext}`;
+      const fullPath = path.join(uploadDir, filename);
+      const buffer = Buffer.from(await attachment.arrayBuffer());
+      await fs.writeFile(fullPath, buffer);
+      attachmentPath = `uploads/complaints/${filename}`;
     }
 
-    // Generate Ticket Number: CMP-YYYYMMDD-XXXX
-    const datePrefix = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const randSuffix = Math.floor(1000 + Math.random() * 9000)
-    const ticketNumber = `CMP-${datePrefix}-${randSuffix}`
+    const now = new Date();
+    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+    const randPart = String(Math.floor(1000 + Math.random() * 9000));
+    const ticketNumber = `CMP-${datePart}-${randPart}`;
 
-    let incidentDate: Date | null = null
-    if (incidentDateStr) {
-      incidentDate = new Date(incidentDateStr)
-    }
+    const incidentDate = incidentDateStr ? new Date(incidentDateStr) : null;
 
-    const complaint = await prisma.complaints.create({
+    await prisma.complaints.create({
       data: {
         ticket_number: ticketNumber,
-        title,
         type,
+        title,
         description,
         accused_name: accusedName,
-        incident_date: incidentDate,
+        incident_date: incidentDate && !isNaN(incidentDate.getTime()) ? incidentDate : null,
         reporter_name: reporterName,
-        reporter_email: reporterEmail,
         reporter_phone: reporterPhone,
+        reporter_email: reporterEmail,
         attachment_path: attachmentPath,
         status: 'pending',
+        is_published: false,
       },
-    })
+    });
 
     return NextResponse.json({
       success: true,
-      ticket_number: complaint.ticket_number,
-    })
-  } catch (error: any) {
-    console.error('Complaint submit error:', error)
+      ticket_number: ticketNumber,
+    });
+  } catch (err) {
+    console.error('Complaint submit error:', err);
     return NextResponse.json(
-      { error: error?.message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' },
+      { success: false, error: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' },
       { status: 500 }
-    )
+    );
   }
 }

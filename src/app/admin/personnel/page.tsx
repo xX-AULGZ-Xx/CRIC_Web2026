@@ -2,73 +2,70 @@ import React from 'react'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
-import { Users, Award } from 'lucide-react'
+import { PersonnelAdminClient } from './PersonnelAdminClient'
+
+export const dynamic = 'force-dynamic'
+
+function getPersonnelRank(p: { position: string; is_executive: boolean | null }): number {
+  const pos = (p.position || '').trim()
+  if (pos.includes('ผู้อำนวยการ') && !pos.includes('รอง')) return 1 // ผู้อำนวยการ
+  if (pos.includes('รองผู้อำนวยการ')) return 2 // รองผู้อำนวยการ
+  if (p.is_executive) return 3 // ครู ทำหน้าที่รองผู้อำนวยการ (ผู้บริหาร)
+  return 4 // บุคลากรทั่วไป
+}
 
 export default async function AdminPersonnelPage() {
   const session = await getSession()
   if (!session) redirect('/admin/login')
 
-  const people = await prisma.personnel.findMany({
-    include: { personnel_categories: true },
-    orderBy: [{ order_num: 'asc' }, { id: 'asc' }],
+  const [personnelList, categories, positions, curriculums] = await Promise.all([
+    prisma.personnel.findMany({
+      include: {
+        personnel_categories: { select: { id: true, name: true, order_num: true, parent_id: true } },
+        personnel_position_links: { select: { position_id: true } },
+        personnel_special_duties: {
+          select: {
+            id: true,
+            category_id: true,
+            special_position: true,
+            is_head: true,
+          },
+        },
+      },
+    }),
+    prisma.personnel_categories.findMany({
+      orderBy: [{ parent_id: 'asc' }, { order_num: 'asc' }],
+      select: { id: true, name: true, parent_id: true },
+    }),
+    prisma.personnel_positions.findMany({
+      orderBy: [{ order_num: 'asc' }, { id: 'asc' }],
+      select: { id: true, name: true },
+    }),
+    prisma.curriculums.findMany({
+      orderBy: { id: 'asc' },
+      select: { id: true, name: true },
+    }),
+  ])
+
+  // Sort with Executives first (ผู้อำนวยการ -> รองผู้อำนวยการ -> ครู ทำหน้าที่รองผู้อำนวยการ -> บุคลากรทั่วไป)
+  const sortedPersonnel = [...personnelList].sort((a, b) => {
+    const rankA = getPersonnelRank(a)
+    const rankB = getPersonnelRank(b)
+    if (rankA !== rankB) return rankA - rankB
+
+    const ordA = a.order_num ?? 9999
+    const ordB = b.order_num ?? 9999
+    if (ordA !== ordB) return ordA - ordB
+
+    return a.id - b.id
   })
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
-      <div>
-        <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
-          <Users className="w-6 h-6 text-orange-500" />
-          <span>จัดการข้อมูลบุคลากร</span>
-        </h1>
-        <p className="text-xs text-slate-400 mt-1">
-          รายชื่อคณะผู้บริหาร ครู และบุคลากรทั้งหมด ({people.length} ท่าน)
-        </p>
-      </div>
-
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/60 border-b border-slate-800 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              <tr>
-                <th className="py-3.5 px-6">ชื่อ-สกุล</th>
-                <th className="py-3.5 px-4">ตำแหน่ง</th>
-                <th className="py-3.5 px-4">ฝ่าย/แผนก</th>
-                <th className="py-3.5 px-4">ข้อมูลติดต่อ</th>
-                <th className="py-3.5 px-4 text-center">สถานะ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/80">
-              {people.map((p) => (
-                <tr key={p.id} className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-6 font-bold text-white">
-                    {p.name}
-                  </td>
-                  <td className="py-3.5 px-4 text-orange-400 font-medium">
-                    {p.position}
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-400">
-                    {p.personnel_categories?.name || '-'}
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-400 font-mono text-[11px]">
-                    {p.contact_info || '-'}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span
-                      className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        p.is_active
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-slate-800 text-slate-500'
-                      }`}
-                    >
-                      {p.is_active ? 'เปิดใช้งาน' : 'ระงับ'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <PersonnelAdminClient
+      initialPersonnel={sortedPersonnel}
+      categories={categories}
+      positions={positions}
+      curriculums={curriculums}
+    />
   )
 }

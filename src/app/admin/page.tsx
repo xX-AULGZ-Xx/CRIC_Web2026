@@ -6,232 +6,432 @@ import { getSession } from '@/lib/auth'
 import {
   Newspaper,
   Users,
-  ShieldAlert,
+  BookOpen,
   Download,
+  Camera,
+  AlertTriangle,
+  Layout,
+  Activity,
+  Plus,
+  Settings,
   Images,
-  GraduationCap,
   ArrowRight,
   Clock,
-  History,
-  CheckCircle2,
+  Server,
+  ShieldCheck,
 } from 'lucide-react'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboardPage() {
   const session = await getSession()
-  if (!session) {
-    redirect('/admin/login')
-  }
+  if (!session) redirect('/admin/login')
 
   const [
     newsCount,
+    publishedNewsCount,
     personnelCount,
-    pendingComplaintsCount,
+    curriculumCount,
     downloadsCount,
+    downloadsAgg,
     galleriesCount,
-    curriculumsCount,
-    recentComplaints,
-    recentAuditLogs,
+    complaintsCount,
+    pendingComplaintsCount,
+    pagesCount,
+    recentLogs,
+    recentNews,
   ] = await Promise.all([
-    prisma.news.count(),
-    prisma.personnel.count({ where: { is_active: true } }),
-    prisma.complaints.count({ where: { status: 'pending' } }),
-    prisma.downloads.count(),
-    prisma.galleries.count(),
-    prisma.curriculums.count(),
-    prisma.complaints.findMany({
-      orderBy: { created_at: 'desc' },
-      take: 5,
-    }),
-    prisma.audit_logs.findMany({
-      include: { users: { select: { username: true } } },
-      orderBy: { created_at: 'desc' },
-      take: 6,
-    }),
+    prisma.news.count().catch(() => 0),
+    prisma.news.count({ where: { status: 'published' } }).catch(() => 0),
+    prisma.personnel.count({ where: { is_active: true } }).catch(() => 0),
+    prisma.curriculums.count().catch(() => 0),
+    prisma.downloads.count().catch(() => 0),
+    prisma.downloads.aggregate({ _sum: { downloads_count: true } }).catch(() => ({ _sum: { downloads_count: 0 } })),
+    prisma.galleries.count().catch(() => 0),
+    prisma.complaints.count().catch(() => 0),
+    prisma.complaints.count({ where: { status: 'pending' } }).catch(() => 0),
+    prisma.static_pages.count().catch(() => 0),
+    prisma.audit_logs
+      .findMany({
+        take: 10,
+        orderBy: { created_at: 'desc' },
+        include: { users: { select: { username: true, role: true } } },
+      })
+      .catch(() => []),
+    prisma.news
+      .findMany({
+        take: 5,
+        orderBy: { created_at: 'desc' },
+        include: { news_categories: true },
+      })
+      .catch(() => []),
   ])
 
-  const stats = [
-    {
-      label: 'ข่าวประชาสัมพันธ์',
-      value: newsCount,
-      href: '/admin/news',
-      icon: Newspaper,
-      color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    },
-    {
-      label: 'ครูและบุคลากร',
-      value: personnelCount,
-      href: '/admin/personnel',
-      icon: Users,
-      color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    },
-    {
-      label: 'เรื่องร้องเรียนรอดำเนินการ',
-      value: pendingComplaintsCount,
-      href: '/admin/complaints',
-      icon: ShieldAlert,
-      color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    },
-    {
-      label: 'ไฟล์เอกสารดาวน์โหลด',
-      value: downloadsCount,
-      href: '/admin/downloads',
-      icon: Download,
-      color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    },
-    {
-      label: 'อัลบั้มภาพกิจกรรม',
-      value: galleriesCount,
-      href: '/admin/galleries',
-      icon: Images,
-      color: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    },
-    {
-      label: 'สาขาวิชาหลักสูตร',
-      value: curriculumsCount,
-      href: '/admin/curriculums',
-      icon: GraduationCap,
-      color: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
-    },
-  ]
+  const totalDownloadHits = downloadsAgg?._sum?.downloads_count || 0
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-orange-600 to-amber-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-orange-600/10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      {/* Header Banner */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <span className="text-xs uppercase tracking-wider font-extrabold text-orange-200 block mb-1">
-            ยินดีต้อนรับสู่ระบบจัดการ
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-            สวัสดี, {session.username} ({session.role})
+          <h1 className="text-2xl font-bold text-slate-800">
+            ยินดีต้อนรับ, {session.username} 👋
           </h1>
-          <p className="text-xs sm:text-sm text-orange-100 mt-1">
-            ระบบ Next.js Full-stack CMS เชื่อมต่อ MariaDB เดิมเรียบร้อยแล้ว
+          <p className="text-sm text-slate-500 mt-1">
+            ระบบบริหารจัดการเนื้อหาเว็บไซต์ (CMS Admin Panel) — จัดการข้อมูลข่าวสาร บุคลากร หลักสูตร และโครงสร้างเว็บไซต์
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/news"
+            className="inline-flex items-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-sm transition-colors"
+          >
+            <Plus className="w-4 h-4 mr-1.5" />
+            เพิ่มข่าวประชาสัมพันธ์
+          </Link>
+          <Link
+            href="/admin/settings"
+            className="inline-flex items-center px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-xl transition-colors"
+          >
+            <Settings className="w-4 h-4 mr-1.5" />
+            ตั้งค่าเว็บไซต์
+          </Link>
+        </div>
+      </div>
+
+      {/* Primary Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <Link
-          href="/"
-          target="_blank"
-          className="px-5 py-2.5 bg-white text-slate-900 rounded-2xl font-extrabold text-xs sm:text-sm shadow-md hover:bg-orange-50 transition shrink-0"
+          href="/admin/news"
+          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all group"
         >
-          เปิดดูเว็บไซต์จริง
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                ข่าวสารและกิจกรรม
+              </p>
+              <h3 className="text-3xl font-extrabold text-slate-800 mt-2">
+                {newsCount.toLocaleString()}
+              </h3>
+              <p className="text-xs text-emerald-600 font-medium mt-1">
+                เผยแพร่แล้ว {publishedNewsCount.toLocaleString()} รายการ
+              </p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+              <Newspaper className="w-6 h-6" />
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/personnel"
+          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                บุคลากรในสังกัด
+              </p>
+              <h3 className="text-3xl font-extrabold text-slate-800 mt-2">
+                {personnelCount.toLocaleString()}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">สถานะปฏิบัติงานปัจจุบัน</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+              <Users className="w-6 h-6" />
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/curriculum"
+          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-200 transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                หลักสูตรการศึกษา
+              </p>
+              <h3 className="text-3xl font-extrabold text-slate-800 mt-2">
+                {curriculumCount.toLocaleString()}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">หลักสูตรและแผนการเรียน</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition-colors">
+              <BookOpen className="w-6 h-6" />
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          href="/admin/downloads"
+          className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-sky-200 transition-all group"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                เอกสารดาวน์โหลด
+              </p>
+              <h3 className="text-3xl font-extrabold text-slate-800 mt-2">
+                {downloadsCount.toLocaleString()}
+              </h3>
+              <p className="text-xs text-sky-600 font-medium mt-1">
+                ยอดดาวน์โหลดรวม {totalDownloadHits.toLocaleString()} ครั้ง
+              </p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center group-hover:bg-sky-600 group-hover:text-white transition-colors">
+              <Download className="w-6 h-6" />
+            </div>
+          </div>
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {stats.map((s, idx) => {
-          const Icon = s.icon
-          return (
-            <Link
-              key={idx}
-              href={s.href}
-              className="bg-slate-900 border border-slate-800 rounded-3xl p-4 sm:p-5 hover:border-slate-700 transition flex flex-col justify-between group"
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className={`p-2.5 rounded-2xl border ${s.color}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
+      {/* Secondary Quick Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <Link
+          href="/admin/galleries"
+          className="bg-white px-5 py-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-indigo-200 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+              <Camera className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">อัลบั้มภาพกิจกรรม</div>
+              <div className="text-lg font-bold text-slate-800">{galleriesCount} อัลบั้ม</div>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400" />
+        </Link>
+
+        <Link
+          href="/admin/pages"
+          className="bg-white px-5 py-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-indigo-200 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+              <Layout className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">หน้าเพจเนื้อหา (Static Pages)</div>
+              <div className="text-lg font-bold text-slate-800">{pagesCount} หน้า</div>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400" />
+        </Link>
+
+        <Link
+          href="/admin/complaints"
+          className="bg-white px-5 py-4 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between hover:border-red-200 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">เรื่องร้องเรียนทั้งหมด</div>
+              <div className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                {complaintsCount} เรื่อง
+                {pendingComplaintsCount > 0 && (
+                  <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded-full font-semibold">
+                    รอดำเนินการ {pendingComplaintsCount}
+                  </span>
+                )}
               </div>
-              <div>
-                <span className="text-2xl sm:text-3xl font-black text-white font-mono block">
-                  {s.value}
-                </span>
-                <span className="text-xs text-slate-400 font-medium block mt-1 line-clamp-1">
-                  {s.label}
-                </span>
-              </div>
-            </Link>
-          )
-        })}
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-slate-400" />
+        </Link>
       </div>
 
-      {/* Grid: Recent Complaints & Audit Logs */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Complaints */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-2.5 text-white font-extrabold">
-              <ShieldAlert className="w-5 h-5 text-rose-500" />
-              <span>เรื่องร้องเรียนล่าสุด</span>
+      {/* Main 2-Column Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Recent News & Audit Logs */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Recent News */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-bold text-slate-800 flex items-center gap-2">
+                <Newspaper className="w-5 h-5 text-indigo-600" />
+                ข่าวสารและกิจกรรมล่าสุด
+              </h2>
+              <Link
+                href="/admin/news"
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800"
+              >
+                จัดการข่าวทั้งหมด &rarr;
+              </Link>
             </div>
-            <Link
-              href="/admin/complaints"
-              className="text-xs font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1"
-            >
-              <span>ดูทั้งหมด</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            <div className="divide-y divide-slate-100">
+              {recentNews.length === 0 ? (
+                <div className="p-8 text-center text-sm text-slate-400">
+                  ยังไม่มีรายการข่าวสารในระบบ
+                </div>
+              ) : (
+                recentNews.map((item) => (
+                  <div
+                    key={item.id}
+                    className="px-6 py-3.5 flex items-center justify-between gap-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-slate-800 truncate">
+                        {item.title}
+                      </div>
+                      <div className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                        <span>{item.news_categories?.name || 'ทั่วไป'}</span>
+                        <span>•</span>
+                        <span>เข้าชม {item.views || 0} ครั้ง</span>
+                      </div>
+                    </div>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold shrink-0 ${
+                        item.status === 'published'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-amber-100 text-amber-700'
+                      }`}
+                    >
+                      {item.status === 'published' ? 'เผยแพร่' : 'ฉบับร่าง'}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
 
-          <div className="divide-y divide-slate-800">
-            {recentComplaints.map((item) => (
-              <div
-                key={item.id}
-                className="py-3 flex items-center justify-between gap-4"
-              >
-                <div className="overflow-hidden">
-                  <span className="text-[11px] font-mono text-orange-400 font-bold block">
-                    {item.ticket_number}
-                  </span>
-                  <h4 className="text-sm font-bold text-slate-200 truncate">{item.title}</h4>
-                  <span className="text-[10px] text-slate-500">
-                    {item.created_at ? new Date(item.created_at).toLocaleDateString('th-TH') : ''}
-                  </span>
+          {/* Audit Logs */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="font-bold text-slate-800 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-indigo-600" />
+                ประวัติการใช้งานระบบล่าสุด (Audit Logs)
+              </h2>
+            </div>
+            <div className="divide-y divide-slate-100">
+              {recentLogs.length === 0 ? (
+                <div className="p-8 text-center text-sm text-slate-400">
+                  ยังไม่มีประวัติการทำรายการ
                 </div>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase shrink-0 ${
-                  item.status === 'pending'
-                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                }`}>
-                  {item.status}
-                </span>
-              </div>
-            ))}
-            {recentComplaints.length === 0 && (
-              <p className="text-xs text-slate-500 py-6 text-center">ไม่มีข้อมูลเรื่องร้องเรียน</p>
-            )}
+              ) : (
+                recentLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="px-6 py-3.5 flex items-start justify-between gap-4 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <span
+                        className={`mt-0.5 px-2 py-0.5 text-[10px] font-bold uppercase rounded-md shrink-0 ${
+                          log.action === 'CREATE'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : log.action === 'DELETE'
+                            ? 'bg-red-100 text-red-700'
+                            : log.action === 'LOGIN'
+                            ? 'bg-sky-100 text-sky-700'
+                            : 'bg-indigo-100 text-indigo-700'
+                        }`}
+                      >
+                        {log.action}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm text-slate-700 font-medium truncate">
+                          {log.details || `${log.action} on ${log.target_type}`}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          โดย <span className="font-medium text-slate-600">{log.users?.username || 'System'}</span> • โมดูล: {log.target_type}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-400 shrink-0 flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      {log.created_at
+                        ? new Date(log.created_at).toLocaleString('th-TH', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '-'}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Recent Audit Logs */}
-        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-            <div className="flex items-center gap-2.5 text-white font-extrabold">
-              <History className="w-5 h-5 text-blue-500" />
-              <span>ประวัติการทำงาน (Audit Trail)</span>
+        {/* Right: Quick Links & System Status */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h2 className="font-bold text-slate-800 mb-4">ทางลัดจัดการข้อมูลด่วน</h2>
+            <div className="grid grid-cols-1 gap-2.5">
+              <Link
+                href="/admin/sliders"
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200/80 transition-colors text-sm font-medium"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Images className="w-4 h-4 text-indigo-500" />
+                  จัดการสไลด์แบนเนอร์หน้าแรก
+                </span>
+                <ArrowRight className="w-4 h-4 opacity-60" />
+              </Link>
+              <Link
+                href="/admin/personnel"
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200/80 transition-colors text-sm font-medium"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Users className="w-4 h-4 text-emerald-500" />
+                  จัดการข้อมูลบุคลากร
+                </span>
+                <ArrowRight className="w-4 h-4 opacity-60" />
+              </Link>
+              <Link
+                href="/admin/ita"
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200/80 transition-colors text-sm font-medium"
+              >
+                <span className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-amber-500" />
+                  จัดการข้อมูลประเมิน ITA
+                </span>
+                <ArrowRight className="w-4 h-4 opacity-60" />
+              </Link>
+              <Link
+                href="/admin/navbars"
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 border border-slate-200/80 transition-colors text-sm font-medium"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Layout className="w-4 h-4 text-purple-500" />
+                  แก้ไขโครงสร้างเมนูเว็บไซต์
+                </span>
+                <ArrowRight className="w-4 h-4 opacity-60" />
+              </Link>
             </div>
-            <Link
-              href="/admin/audit-logs"
-              className="text-xs font-bold text-orange-400 hover:text-orange-300 flex items-center gap-1"
-            >
-              <span>ดูทั้งหมด</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
 
-          <div className="divide-y divide-slate-800">
-            {recentAuditLogs.map((log) => (
-              <div key={log.id} className="py-2.5 flex items-start gap-3">
-                <div className="w-2 h-2 rounded-full bg-orange-500 mt-1.5 shrink-0" />
-                <div className="overflow-hidden">
-                  <p className="text-xs text-slate-300">
-                    <span className="font-bold text-white">{log.users?.username}</span>{' '}
-                    <span className="text-slate-400">{log.action}</span> on{' '}
-                    <span className="text-orange-400">{log.target_type}</span>
-                  </p>
-                  {log.details && (
-                    <p className="text-[11px] text-slate-500 truncate">{log.details}</p>
-                  )}
-                  <span className="text-[10px] text-slate-600">
-                    {log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : ''}
-                  </span>
-                </div>
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+            <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
+              <Server className="w-5 h-5 text-indigo-600" />
+              ข้อมูลระบบ (System Status)
+            </h2>
+            <dl className="space-y-3 text-sm">
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <dt className="text-slate-500">แพลตฟอร์ม</dt>
+                <dd className="font-semibold text-slate-800">Next.js 16.4.2 (App Router)</dd>
               </div>
-            ))}
-            {recentAuditLogs.length === 0 && (
-              <p className="text-xs text-slate-500 py-6 text-center">ยังไม่มีประวัติกิจกรรม</p>
-            )}
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <dt className="text-slate-500">ฐานข้อมูล</dt>
+                <dd className="font-semibold text-emerald-600">MariaDB / Prisma ORM</dd>
+              </div>
+              <div className="flex justify-between py-1.5 border-b border-slate-100">
+                <dt className="text-slate-500">สิทธิ์ผู้ใช้งาน</dt>
+                <dd className="font-semibold text-indigo-600 uppercase">{session.role}</dd>
+              </div>
+              <div className="flex justify-between py-1.5">
+                <dt className="text-slate-500">สถานะเซิร์ฟเวอร์</dt>
+                <dd className="font-semibold text-emerald-600 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  ออนไลน์ปกติ
+                </dd>
+              </div>
+            </dl>
           </div>
         </div>
       </div>
