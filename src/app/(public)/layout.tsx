@@ -67,7 +67,11 @@ export default async function PublicLayout({
           `,
         }}
       />
-      <Suspense fallback={null}>
+      <Suspense
+        fallback={
+          <div className="h-20 bg-white/95 border-b border-slate-100 shadow-sm w-full" />
+        }
+      >
         <Header
           settings={settings}
           navbars={filteredNavbars}

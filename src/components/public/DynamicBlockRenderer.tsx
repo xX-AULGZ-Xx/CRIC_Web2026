@@ -324,7 +324,7 @@ async function renderLatestNewsBlock() {
 
       {latestNews.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {latestNews.map((news) => {
+          {latestNews.map((news, index) => {
             const plainExcerpt = stripTagsAndEntities(news.content);
             const posClass =
               news.cover_position === 'top'
@@ -346,6 +346,7 @@ async function renderLatestNewsBlock() {
                       src={normalizeImageUrl(news.cover_image, 'thumbnail')}
                       alt={news.title}
                       fill
+                      priority={index === 0}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       style={{ objectPosition: `center ${news.cover_position || '50%'}` }}
