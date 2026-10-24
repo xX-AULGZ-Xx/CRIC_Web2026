@@ -336,6 +336,7 @@ export function Header({
                 width={48}
                 height={48}
                 priority
+                fetchPriority="high"
                 className="w-12 h-12 object-contain transition duration-300 group-hover:scale-105"
                 alt="College Logo"
               />

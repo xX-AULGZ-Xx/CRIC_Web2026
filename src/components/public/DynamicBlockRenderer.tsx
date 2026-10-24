@@ -347,7 +347,8 @@ async function renderLatestNewsBlock() {
                       alt={news.title}
                       fill
                       priority={index === 0}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
+                      sizes="(max-width: 640px) 420px, (max-width: 1024px) 50vw, 384px"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       style={{ objectPosition: `center ${news.cover_position || '50%'}` }}
                     />
@@ -774,7 +775,7 @@ async function renderCategorizedNewsBlock(
                       src={normalizeImageUrl(news.cover_image, 'thumbnail')}
                       alt={news.title}
                       fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                      sizes="(max-width: 640px) 420px, (max-width: 1024px) 50vw, 384px"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       style={{ objectPosition: `center ${news.cover_position || '50%'}` }}
                     />

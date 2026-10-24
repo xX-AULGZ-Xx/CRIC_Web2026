@@ -71,6 +71,7 @@ export function HomeSliderClient({
                     width={1640}
                     height={720}
                     priority={index === 0}
+                    fetchPriority={index === 0 ? 'high' : 'auto'}
                     sizes="(max-width: 768px) 100vw, 800px"
                     className="w-full h-auto block"
                   />
@@ -159,7 +160,8 @@ export function HomeSliderClient({
                         src={slideUrl}
                         alt=""
                         fill
-                        priority={index === 0}
+                        priority={false}
+                        loading="lazy"
                         sizes="100vw"
                         className="object-cover blur-2xl opacity-50 scale-105"
                       />
@@ -168,7 +170,8 @@ export function HomeSliderClient({
                         src={slideUrl}
                         alt={slide.title || 'Banner Image'}
                         fill
-                        priority={index === 0}
+                        priority={false}
+                        loading="lazy"
                         sizes="100vw"
                         className="object-contain"
                       />
@@ -179,7 +182,8 @@ export function HomeSliderClient({
                       src={slideUrl}
                       alt={slide.title || 'Banner Image'}
                       fill
-                      priority={index === 0}
+                      priority={false}
+                      loading="lazy"
                       sizes="100vw"
                       className="object-cover"
                     />
