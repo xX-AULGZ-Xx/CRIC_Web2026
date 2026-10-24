@@ -169,13 +169,13 @@ export function Header({
     const handleScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 50)
+          const next = window.scrollY > 50
+          setIsScrolled((prev) => (prev !== next ? next : prev))
           ticking = false
         })
         ticking = true
       }
     }
-    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
