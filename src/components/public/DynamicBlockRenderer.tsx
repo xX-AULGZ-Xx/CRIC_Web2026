@@ -3,6 +3,7 @@ import Link from 'next/link';
 import prisma from '@/lib/prisma';
 import { getSettings } from '@/lib/settings';
 import {
+  formatSlideImageUrl,
   normalizeHtmlContent,
   normalizeImageUrl,
   normalizeLinkUrl,
@@ -225,7 +226,21 @@ async function renderHomeSlidersBlock(siteName: string) {
     fit_width: r.fit_width,
   }));
 
-  return <HomeSliderClient sliders={sliders} siteName={siteName} />;
+  const firstImageUrl = sliders.length > 0 ? formatSlideImageUrl(sliders[0].image_path) : null;
+
+  return (
+    <>
+      {firstImageUrl && (
+        <link
+          rel="preload"
+          as="image"
+          href={firstImageUrl}
+          fetchPriority="high"
+        />
+      )}
+      <HomeSliderClient sliders={sliders} siteName={siteName} />
+    </>
+  );
 }
 
 function renderQuickAccessBlock(encodedJson?: string) {
@@ -341,9 +356,10 @@ async function renderLatestNewsBlock() {
                 <div className="relative aspect-video overflow-hidden bg-slate-100">
                   {news.cover_image ? (
                     <img
-                      src={normalizeImageUrl(news.cover_image, 'preview')}
+                      src={normalizeImageUrl(news.cover_image, 'thumbnail')}
                       alt={news.title}
                       loading="lazy"
+                      decoding="async"
                       style={{ objectPosition: `center ${news.cover_position || '50%'}` }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -510,9 +526,10 @@ async function renderExecutivesBlock(customTitleRaw?: string, customSubRaw?: str
                   <div className="w-full h-full rounded-full overflow-hidden bg-slate-800">
                     {person.image_path ? (
                       <img
-                        src={normalizeImageUrl(person.image_path)}
+                        src={normalizeImageUrl(person.image_path, 'thumbnail')}
                         alt={person.name}
                         loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
@@ -557,9 +574,10 @@ async function renderExecutivesBlock(customTitleRaw?: string, customSubRaw?: str
                   <div className="w-full h-full rounded-full overflow-hidden bg-slate-900">
                     {person.image_path ? (
                       <img
-                        src={normalizeImageUrl(person.image_path)}
+                        src={normalizeImageUrl(person.image_path, 'thumbnail')}
                         alt={person.name}
                         loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
@@ -764,9 +782,10 @@ async function renderCategorizedNewsBlock(
                 <div className="relative aspect-video overflow-hidden bg-slate-100">
                   {news.cover_image ? (
                     <img
-                      src={normalizeImageUrl(news.cover_image, 'preview')}
+                      src={normalizeImageUrl(news.cover_image, 'thumbnail')}
                       alt={news.title}
                       loading="lazy"
+                      decoding="async"
                       style={{ objectPosition: `center ${news.cover_position || '50%'}` }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />

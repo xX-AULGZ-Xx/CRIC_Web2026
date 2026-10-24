@@ -4,17 +4,19 @@ import './globals.css'
 import { getSettings } from '@/lib/settings'
 
 const sarabun = Sarabun({
-  weight: ['300', '400', '500', '600', '700'],
+  weight: ['400', '500', '600', '700'],
   subsets: ['thai', 'latin'],
   variable: '--font-sarabun',
   display: 'swap',
+  preload: true,
 })
 
 const outfit = Outfit({
-  weight: ['400', '500', '600', '700'],
+  weight: ['500', '600', '700'],
   subsets: ['latin'],
   variable: '--font-outfit',
   display: 'swap',
+  preload: true,
 })
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -48,11 +50,26 @@ export default function RootLayout({
       className={`${sarabun.variable} ${outfit.variable} scroll-smooth`}
     >
       <head>
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+        <link
+          rel="preload"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          as="style"
+        />
         <link
           rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          media="print"
+          // @ts-expect-error onLoad attribute for asynchronous non-blocking stylesheet loading
+          onLoad="this.media='all'"
         />
-        <script src="/assets/lucide.min.js" defer></script>
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          />
+        </noscript>
       </head>
       <body className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col antialiased">
         {children}

@@ -255,3 +255,20 @@ export function normalizeHtmlContent(html: string | null | undefined): string {
       return match;
     });
 }
+
+/**
+ * Format hero slide image URL with optimized preview/thumbnail size
+ */
+export function formatSlideImageUrl(rawPath: string): string {
+  if (!rawPath) return '';
+  let slidePath = rawPath;
+  if (slidePath.includes('/original?')) {
+    slidePath = slidePath.replace('/original?', '/thumbnail?');
+    if (!slidePath.includes('size=')) {
+      slidePath += '&size=preview';
+    } else {
+      slidePath = slidePath.replace('size=thumbnail', 'size=preview');
+    }
+  }
+  return normalizeImageUrl(slidePath, 'preview');
+}

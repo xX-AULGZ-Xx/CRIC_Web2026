@@ -5,7 +5,6 @@ import { getSession } from '@/lib/auth'
 import { Header } from '@/components/public/Header'
 import { Footer } from '@/components/public/Footer'
 import { GlobalLightbox } from '@/components/public/GlobalLightbox'
-import { LucideHydrator } from '@/components/public/LucideHydrator'
 import { MaintenanceView } from '@/components/public/MaintenanceView'
 
 export const dynamic = 'force-dynamic'
@@ -78,7 +77,6 @@ export default async function PublicLayout({
       <main className="flex-1 flex flex-col">{children}</main>
       <Footer settings={settings} />
       <GlobalLightbox />
-      <LucideHydrator />
     </div>
   )
 }

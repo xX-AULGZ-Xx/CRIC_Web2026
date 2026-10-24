@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
-import { normalizeImageUrl, normalizeLinkUrl } from '@/lib/url-helper'
+import { normalizeImageUrl, normalizeLinkUrl, formatSlideImageUrl } from '@/lib/url-helper'
 
 export interface SliderItem {
   id: number
@@ -14,20 +14,6 @@ export interface SliderItem {
   order_num?: number | null
   is_active?: boolean | null
   fit_width?: boolean | number | null
-}
-
-function formatSlideImageUrl(rawPath: string): string {
-  if (!rawPath) return ''
-  let slidePath = rawPath
-  if (slidePath.includes('/original?')) {
-    slidePath = slidePath.replace('/original?', '/thumbnail?')
-    if (!slidePath.includes('size=')) {
-      slidePath += '&size=preview'
-    } else {
-      slidePath = slidePath.replace('size=thumbnail', 'size=preview')
-    }
-  }
-  return normalizeImageUrl(slidePath, 'preview')
 }
 
 export function HomeSliderClient({
@@ -61,11 +47,12 @@ export function HomeSliderClient({
     <div className="w-full">
       {/* Mobile Slider (Dynamic height, zero crop) */}
       <section className="block md:hidden relative overflow-hidden bg-white">
-        <div className="relative w-full" id="slider-container-mobile">
+        <div className="relative w-full min-h-[160px] sm:min-h-[220px] bg-slate-100" id="slider-container-mobile">
           {sliders.map((slide, index) => {
             const slideUrl = formatSlideImageUrl(slide.image_path)
             const linkHref = slide.link ? normalizeLinkUrl(slide.link) : ''
             const isActive = index === currentIndex
+            const isNear = Math.abs(index - currentIndex) <= 1 || (currentIndex === 0 && index === sliders.length - 1) || (currentIndex === sliders.length - 1 && index === 0)
 
             return (
               <div
@@ -76,11 +63,16 @@ export function HomeSliderClient({
                     : 'absolute inset-0 opacity-0 z-0 pointer-events-none'
                 }`}
               >
-                <img
-                  src={slideUrl}
-                  className="w-full h-auto block"
-                  alt={slide.title || 'Banner Image'}
-                />
+                {isNear && (
+                  <img
+                    src={slideUrl}
+                    className="w-full h-auto block"
+                    alt={slide.title || 'Banner Image'}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    fetchPriority={index === 0 ? 'high' : 'low'}
+                    decoding={index === 0 ? 'sync' : 'async'}
+                  />
+                )}
 
                 {/* Text Info Overlay content */}
                 {(slide.title || slide.subtitle || linkHref) && (
@@ -146,6 +138,7 @@ export function HomeSliderClient({
             const slideUrl = formatSlideImageUrl(slide.image_path)
             const linkHref = slide.link ? normalizeLinkUrl(slide.link) : ''
             const isActive = index === currentIndex
+            const isNear = Math.abs(index - currentIndex) <= 1 || (currentIndex === 0 && index === sliders.length - 1) || (currentIndex === sliders.length - 1 && index === 0)
 
             return (
               <div
@@ -156,28 +149,30 @@ export function HomeSliderClient({
                     : 'opacity-0 z-0 pointer-events-none'
                 }`}
               >
-                {isFitWidth ? (
-                  <>
-                    {/* Blurred Background Layer */}
+                {isNear && (
+                  isFitWidth ? (
+                    <>
+                      {/* Blurred Background Layer */}
+                      <div
+                        className="absolute inset-0 w-full h-full bg-cover bg-center blur-2xl opacity-50 scale-105"
+                        style={{ backgroundImage: `url('${slideUrl}')` }}
+                      />
+                      {/* Centered Main Image Layer (Fit H) */}
+                      <div
+                        className="absolute inset-0 w-full h-full bg-no-repeat bg-center"
+                        style={{
+                          backgroundImage: `url('${slideUrl}')`,
+                          backgroundSize: 'auto 100%',
+                        }}
+                      />
+                    </>
+                  ) : (
+                    /* Full Cover Background */
                     <div
-                      className="absolute inset-0 w-full h-full bg-cover bg-center blur-2xl opacity-50 scale-105"
+                      className="absolute inset-0 w-full h-full bg-cover bg-center"
                       style={{ backgroundImage: `url('${slideUrl}')` }}
                     />
-                    {/* Centered Main Image Layer (Fit H) */}
-                    <div
-                      className="absolute inset-0 w-full h-full bg-no-repeat bg-center"
-                      style={{
-                        backgroundImage: `url('${slideUrl}')`,
-                        backgroundSize: 'auto 100%',
-                      }}
-                    />
-                  </>
-                ) : (
-                  /* Full Cover Background */
-                  <div
-                    className="absolute inset-0 w-full h-full bg-cover bg-center"
-                    style={{ backgroundImage: `url('${slideUrl}')` }}
-                  />
+                  )
                 )}
 
                 {/* Text Info Overlay content */}

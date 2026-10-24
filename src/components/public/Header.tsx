@@ -362,6 +362,9 @@ export function Header({
             {logoSrc ? (
               <img
                 src={logoSrc}
+                width={48}
+                height={48}
+                decoding="async"
                 className="w-12 h-12 object-contain transition duration-300 group-hover:scale-105"
                 alt="College Logo"
               />
