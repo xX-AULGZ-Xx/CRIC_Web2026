@@ -1,11 +1,12 @@
-import React, { Suspense } from 'react'
+import React from 'react'
 import prisma from '@/lib/prisma'
 import { getSettings, getThemeClasses } from '@/lib/settings'
 import { getSession } from '@/lib/auth'
-import { Header } from '@/components/public/Header'
+import { Header, NestedNavItem } from '@/components/public/Header'
 import { Footer } from '@/components/public/Footer'
 import { GlobalLightbox } from '@/components/public/GlobalLightbox'
 import { MaintenanceView } from '@/components/public/MaintenanceView'
+import { normalizeLinkUrl } from '@/lib/url-helper'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,6 +51,29 @@ export default async function PublicLayout({
     return true
   })
 
+  // Build 3-level tree on the server to reduce client-side payload and hydration cost
+  const byParent = new Map<number | null, (typeof allNavbars)[number][]>()
+  for (const item of filteredNavbars) {
+    const pid = item.parent_id ? Number(item.parent_id) : null
+    if (!byParent.has(pid)) byParent.set(pid, [])
+    byParent.get(pid)!.push(item)
+  }
+
+  const buildLevel = (parentId: number | null, depth: number): NestedNavItem[] => {
+    if (depth > 3) return []
+    const list = byParent.get(parentId) || []
+    return list.map((item) => ({
+      id: item.id,
+      parent_id: item.parent_id ?? null,
+      label: item.label,
+      url: normalizeLinkUrl(item.url),
+      icon: item.icon,
+      target_blank: Boolean(item.target_blank),
+      children: buildLevel(item.id, depth + 1),
+    }))
+  }
+
+  const navTree = buildLevel(null, 1)
   const theme = getThemeClasses(settings.theme_color || 'orange')
 
   return (
@@ -67,17 +91,11 @@ export default async function PublicLayout({
           `,
         }}
       />
-      <Suspense
-        fallback={
-          <div className="h-20 bg-white/95 border-b border-slate-100 shadow-sm w-full" />
-        }
-      >
-        <Header
-          settings={settings}
-          navbars={filteredNavbars}
-          isLoggedIn={Boolean(session)}
-        />
-      </Suspense>
+      <Header
+        settings={settings}
+        navTree={navTree}
+        isLoggedIn={Boolean(session)}
+      />
       <main className="flex-1 flex flex-col">{children}</main>
       <Footer settings={settings} />
       <GlobalLightbox />

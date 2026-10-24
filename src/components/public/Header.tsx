@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
   Menu,
   X,
@@ -74,7 +74,7 @@ export interface NestedNavItem {
 interface HeaderProps {
   settings: SiteSettings
   navbars?: RawNavbarItem[]
-  navTree?: RawNavbarItem[]
+  navTree?: NestedNavItem[] | RawNavbarItem[]
   isLoggedIn?: boolean
 }
 
@@ -183,7 +183,6 @@ export function Header({
   isLoggedIn = false,
 }: HeaderProps) {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const [isScrolled, setIsScrolled] = useState(false)
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
   const [mobileOpenIds, setMobileOpenIds] = useState<Record<number, boolean>>({})
@@ -194,7 +193,10 @@ export function Header({
   const showLoginBtn = settings.show_login_btn !== '0'
   const loginBtnText = settings.login_btn_text || 'เข้าสู่ระบบจัดการ'
 
-  const menus = buildThreeLevelNavTree(navbars, navTree)
+  const menus: NestedNavItem[] =
+    navTree && navTree.length > 0 && 'children' in navTree[0]
+      ? (navTree as NestedNavItem[])
+      : buildThreeLevelNavTree(navbars, navTree as RawNavbarItem[])
 
   useEffect(() => {
     let ticking = false
@@ -212,20 +214,15 @@ export function Header({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const currentQuery = searchParams?.toString() || ''
-
   const isMenuActive = (menuUrl: string): boolean => {
     if (!menuUrl || menuUrl === '#') return false
     if (menuUrl.startsWith('http://') || menuUrl.startsWith('https://')) return false
 
-    const [urlPath, urlQuery] = menuUrl.split('?')
+    const [urlPath] = menuUrl.split('?')
     if (urlPath === '/' && pathname === '/') {
-      return !urlQuery || urlQuery === currentQuery
+      return true
     }
-    if (urlPath !== '/' && pathname === urlPath) {
-      if (urlQuery) {
-        return urlQuery === currentQuery
-      }
+    if (urlPath !== '/' && (pathname === urlPath || pathname.startsWith(`${urlPath}/`))) {
       return true
     }
     return false
