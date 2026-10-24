@@ -196,8 +196,15 @@ export function Header({
   const menus = buildThreeLevelNavTree(navbars, navTree)
 
   useEffect(() => {
+    let ticking = false
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 50)
+          ticking = false
+        })
+        ticking = true
+      }
     }
     handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })

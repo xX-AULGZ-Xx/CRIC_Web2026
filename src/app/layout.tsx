@@ -49,28 +49,7 @@ export default function RootLayout({
       lang="th"
       className={`${sarabun.variable} ${outfit.variable} scroll-smooth`}
     >
-      <head>
-        <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
-        <link
-          rel="preload"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-          as="style"
-        />
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-          media="print"
-          // @ts-expect-error onLoad attribute for asynchronous non-blocking stylesheet loading
-          onLoad="this.media='all'"
-        />
-        <noscript>
-          <link
-            rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-          />
-        </noscript>
-      </head>
+      <head />
       <body className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col antialiased">
         {children}
       </body>

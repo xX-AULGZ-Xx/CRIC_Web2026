@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import prisma from '@/lib/prisma';
 import { getSettings } from '@/lib/settings';
 import {
@@ -226,21 +227,7 @@ async function renderHomeSlidersBlock(siteName: string) {
     fit_width: r.fit_width,
   }));
 
-  const firstImageUrl = sliders.length > 0 ? formatSlideImageUrl(sliders[0].image_path) : null;
-
-  return (
-    <>
-      {firstImageUrl && (
-        <link
-          rel="preload"
-          as="image"
-          href={firstImageUrl}
-          fetchPriority="high"
-        />
-      )}
-      <HomeSliderClient sliders={sliders} siteName={siteName} />
-    </>
-  );
+  return <HomeSliderClient sliders={sliders} siteName={siteName} />;
 }
 
 function renderQuickAccessBlock(encodedJson?: string) {
@@ -355,13 +342,13 @@ async function renderLatestNewsBlock() {
               >
                 <div className="relative aspect-video overflow-hidden bg-slate-100">
                   {news.cover_image ? (
-                    <img
+                    <Image
                       src={normalizeImageUrl(news.cover_image, 'thumbnail')}
                       alt={news.title}
-                      loading="lazy"
-                      decoding="async"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                       style={{ objectPosition: `center ${news.cover_position || '50%'}` }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
@@ -523,14 +510,14 @@ async function renderExecutivesBlock(customTitleRaw?: string, customSubRaw?: str
                 className="w-full sm:w-72 md:w-80 bg-gradient-to-b from-orange-950/40 to-slate-800/80 backdrop-blur-md rounded-3xl p-6 border-2 border-orange-500/30 text-center group hover:border-orange-400 transition-all duration-300 flex flex-col items-center shadow-2xl shadow-orange-950/20 transform md:-translate-y-2"
               >
                 <div className="relative w-36 h-36 mb-5 rounded-full p-1.5 bg-gradient-to-tr from-amber-400 via-orange-500 to-amber-500 shadow-xl">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-800">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-800 relative">
                     {person.image_path ? (
-                      <img
+                      <Image
                         src={normalizeImageUrl(person.image_path, 'thumbnail')}
                         alt={person.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
+                        fill
+                        sizes="144px"
+                        className="object-cover object-top group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-500">
@@ -571,14 +558,14 @@ async function renderExecutivesBlock(customTitleRaw?: string, customSubRaw?: str
                 className="bg-slate-800/50 backdrop-blur-md rounded-3xl p-6 border border-white/10 text-center group hover:bg-slate-800 transition-all duration-300 flex flex-col items-center"
               >
                 <div className="relative w-28 h-28 mb-4 rounded-full p-1 bg-gradient-to-tr from-orange-500 to-amber-500">
-                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-900">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 relative">
                     {person.image_path ? (
-                      <img
+                      <Image
                         src={normalizeImageUrl(person.image_path, 'thumbnail')}
                         alt={person.name}
-                        loading="lazy"
-                        decoding="async"
-                        className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
+                        fill
+                        sizes="112px"
+                        className="object-cover object-top group-hover:scale-110 transition-transform duration-500"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-600">
@@ -781,13 +768,13 @@ async function renderCategorizedNewsBlock(
               >
                 <div className="relative aspect-video overflow-hidden bg-slate-100">
                   {news.cover_image ? (
-                    <img
+                    <Image
                       src={normalizeImageUrl(news.cover_image, 'thumbnail')}
                       alt={news.title}
-                      loading="lazy"
-                      decoding="async"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                       style={{ objectPosition: `center ${news.cover_position || '50%'}` }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">

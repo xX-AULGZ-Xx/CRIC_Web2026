@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { normalizeImageUrl, normalizeLinkUrl, formatSlideImageUrl } from '@/lib/url-helper'
 
@@ -47,7 +48,7 @@ export function HomeSliderClient({
     <div className="w-full">
       {/* Mobile Slider (Dynamic height, zero crop) */}
       <section className="block md:hidden relative overflow-hidden bg-white">
-        <div className="relative w-full min-h-[160px] sm:min-h-[220px] bg-slate-100" id="slider-container-mobile">
+        <div className="relative w-full aspect-[1640/720] bg-slate-100 overflow-hidden" id="slider-container-mobile">
           {sliders.map((slide, index) => {
             const slideUrl = formatSlideImageUrl(slide.image_path)
             const linkHref = slide.link ? normalizeLinkUrl(slide.link) : ''
@@ -57,20 +58,21 @@ export function HomeSliderClient({
             return (
               <div
                 key={slide.id}
-                className={`w-full transition-opacity duration-700 ease-in-out slide-item-mobile ${
+                className={`w-full h-full transition-opacity duration-500 ease-in-out slide-item-mobile ${
                   isActive
                     ? 'relative opacity-100 z-10'
                     : 'absolute inset-0 opacity-0 z-0 pointer-events-none'
                 }`}
               >
                 {isNear && (
-                  <img
+                  <Image
                     src={slideUrl}
-                    className="w-full h-auto block"
                     alt={slide.title || 'Banner Image'}
-                    loading={index === 0 ? 'eager' : 'lazy'}
-                    fetchPriority={index === 0 ? 'high' : 'low'}
-                    decoding={index === 0 ? 'sync' : 'async'}
+                    width={1640}
+                    height={720}
+                    priority={index === 0}
+                    sizes="(max-width: 768px) 100vw, 800px"
+                    className="w-full h-auto block"
                   />
                 )}
 
@@ -153,24 +155,33 @@ export function HomeSliderClient({
                   isFitWidth ? (
                     <>
                       {/* Blurred Background Layer */}
-                      <div
-                        className="absolute inset-0 w-full h-full bg-cover bg-center blur-2xl opacity-50 scale-105"
-                        style={{ backgroundImage: `url('${slideUrl}')` }}
+                      <Image
+                        src={slideUrl}
+                        alt=""
+                        fill
+                        priority={index === 0}
+                        sizes="100vw"
+                        className="object-cover blur-2xl opacity-50 scale-105"
                       />
                       {/* Centered Main Image Layer (Fit H) */}
-                      <div
-                        className="absolute inset-0 w-full h-full bg-no-repeat bg-center"
-                        style={{
-                          backgroundImage: `url('${slideUrl}')`,
-                          backgroundSize: 'auto 100%',
-                        }}
+                      <Image
+                        src={slideUrl}
+                        alt={slide.title || 'Banner Image'}
+                        fill
+                        priority={index === 0}
+                        sizes="100vw"
+                        className="object-contain"
                       />
                     </>
                   ) : (
                     /* Full Cover Background */
-                    <div
-                      className="absolute inset-0 w-full h-full bg-cover bg-center"
-                      style={{ backgroundImage: `url('${slideUrl}')` }}
+                    <Image
+                      src={slideUrl}
+                      alt={slide.title || 'Banner Image'}
+                      fill
+                      priority={index === 0}
+                      sizes="100vw"
+                      className="object-cover"
                     />
                   )
                 )}
