@@ -305,7 +305,7 @@ async function renderLatestNewsBlock() {
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-xs font-bold mb-3 uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/70 text-orange-800 text-xs font-bold mb-3 uppercase tracking-wider">
             <Newspaper className="w-3.5 h-3.5" />
             <span>News &amp; Updates</span>
           </div>
@@ -315,7 +315,7 @@ async function renderLatestNewsBlock() {
         </div>
         <Link
           href="/news"
-          className="inline-flex items-center gap-2 text-orange-600 font-semibold hover:text-orange-800 group bg-orange-50 hover:bg-orange-100 px-5 py-2.5 rounded-xl transition-colors self-start md:self-auto"
+          className="inline-flex items-center gap-2 text-orange-700 font-semibold hover:text-orange-900 group bg-orange-100/70 hover:bg-orange-100 px-5 py-2.5 rounded-xl transition-colors self-start md:self-auto"
         >
           <span>ดูข่าวสารทั้งหมด</span>
           <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
@@ -369,14 +369,14 @@ async function renderLatestNewsBlock() {
                   </div>
                 </div>
                 <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-3 text-xs text-slate-400 mb-3 font-medium">
+                  <div className="flex items-center gap-3 text-xs text-slate-600 mb-3 font-medium">
                     <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
                       {formatThaiShortDate(news.created_at)}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1.5">
-                      <Eye className="w-3.5 h-3.5 text-slate-400" />
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
                       {(news.views || 0).toLocaleString()} เข้าชม
                     </span>
                   </div>
@@ -391,7 +391,8 @@ async function renderLatestNewsBlock() {
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
                     <Link
                       href={newsHref}
-                      className="inline-flex items-center gap-1 text-sm font-bold text-orange-600 hover:text-orange-800 group/link"
+                      aria-label={`อ่านเพิ่มเติม: ${news.title}`}
+                      className="inline-flex items-center gap-1 text-sm font-bold text-orange-700 hover:text-orange-900 group/link"
                     >
                       <span>อ่านเพิ่มเติม</span>
                       <ChevronRight className="w-4 h-4 transform group-hover/link:translate-x-1 transition-transform" />
@@ -733,7 +734,7 @@ async function renderCategorizedNewsBlock(
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-50 text-orange-600 text-xs font-bold mb-3 uppercase tracking-wider">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-100/70 text-orange-800 text-xs font-bold mb-3 uppercase tracking-wider">
             <Megaphone className="w-3.5 h-3.5" />
             <span>News Category</span>
           </div>
@@ -743,7 +744,7 @@ async function renderCategorizedNewsBlock(
         </div>
         <Link
           href={viewAllUrl}
-          className="inline-flex items-center gap-2 text-orange-600 font-semibold hover:text-orange-800 group bg-orange-50 hover:bg-orange-100 px-5 py-2.5 rounded-xl transition-colors self-start md:self-auto"
+          className="inline-flex items-center gap-2 text-orange-700 font-semibold hover:text-orange-900 group bg-orange-100/70 hover:bg-orange-100 px-5 py-2.5 rounded-xl transition-colors self-start md:self-auto"
         >
           <span>ดูทั้งหมด</span>
           <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
@@ -789,14 +790,14 @@ async function renderCategorizedNewsBlock(
                   </div>
                 </div>
                 <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-center gap-3 text-xs text-slate-400 mb-3 font-medium">
+                  <div className="flex items-center gap-3 text-xs text-slate-600 mb-3 font-medium">
                     <span className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
                       {formatThaiShortDate(news.created_at)}
                     </span>
                     <span>•</span>
                     <span className="flex items-center gap-1.5">
-                      <Eye className="w-3.5 h-3.5 text-slate-400" />
+                      <Eye className="w-3.5 h-3.5 text-slate-500" />
                       {(news.views || 0).toLocaleString()} เข้าชม
                     </span>
                   </div>
@@ -811,7 +812,8 @@ async function renderCategorizedNewsBlock(
                   <div className="pt-3 border-t border-slate-100 flex items-center justify-between mt-auto">
                     <Link
                       href={newsHref}
-                      className="inline-flex items-center gap-1 text-sm font-bold text-orange-600 hover:text-orange-800 group/link"
+                      aria-label={`อ่านเพิ่มเติม: ${news.title}`}
+                      className="inline-flex items-center gap-1 text-sm font-bold text-orange-700 hover:text-orange-900 group/link"
                     >
                       <span>อ่านเพิ่มเติม</span>
                       <ChevronRight className="w-4 h-4 transform group-hover/link:translate-x-1 transition-transform" />

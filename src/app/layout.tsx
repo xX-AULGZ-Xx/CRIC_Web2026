@@ -4,7 +4,7 @@ import './globals.css'
 import { getSettings } from '@/lib/settings'
 
 const sarabun = Sarabun({
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '600', '700'],
   subsets: ['thai', 'latin'],
   variable: '--font-sarabun',
   display: 'swap',
@@ -12,7 +12,7 @@ const sarabun = Sarabun({
 })
 
 const outfit = Outfit({
-  weight: ['500', '600', '700'],
+  weight: ['600', '700'],
   subsets: ['latin'],
   variable: '--font-outfit',
   display: 'swap',

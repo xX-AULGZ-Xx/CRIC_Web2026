@@ -1,5 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin, Phone, Mail, GraduationCap } from 'lucide-react'
 import { SiteSettings, getThemeClasses } from '@/lib/settings'
 import { normalizeLinkUrl, normalizeImageUrl } from '@/lib/url-helper'
@@ -38,12 +39,10 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         <div className="space-y-4">
           <Link href="/" className="flex items-center gap-2 text-white">
             {logoSrc ? (
-              <img
+              <Image
                 src={logoSrc}
                 width={40}
                 height={40}
-                loading="lazy"
-                decoding="async"
                 className="w-10 h-10 object-contain"
                 alt="College Logo"
               />
@@ -56,7 +55,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               {settings.site_name || 'วิทยาลัยการอาชีพเชียงราย'}
             </span>
           </Link>
-          <p className="text-xs text-slate-500 max-w-sm">
+          <p className="text-xs text-slate-400 max-w-sm">
             {settings.footer_desc ||
               'วิทยาลัยมุ่งมั่นในการเรียนรู้อย่างต่อเนื่อง พัฒนาทักษะวิชาชีพ และนำเทคโนโลยีเข้ามาส่งเสริมสังคมในระดับประเทศและสากล'}
           </p>
@@ -154,7 +153,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 border-t border-white/5 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500 font-medium">
+      <div className="max-w-7xl mx-auto px-6 border-t border-white/5 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-400 font-medium">
         <span>{settings.footer_text || ''}</span>
         <span>{settings.footer_powered_by || 'Powered by College Web CMS'}</span>
       </div>

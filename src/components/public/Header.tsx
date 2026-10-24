@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useSearchParams } from 'next/navigation'
 import {
   Menu,
@@ -367,11 +368,11 @@ export function Header({
           {/* Brand Logo */}
           <Link href="/" className="flex items-center gap-3 group shrink-0">
             {logoSrc ? (
-              <img
+              <Image
                 src={logoSrc}
                 width={48}
                 height={48}
-                decoding="async"
+                priority
                 className="w-12 h-12 object-contain transition duration-300 group-hover:scale-105"
                 alt="College Logo"
               />
@@ -386,7 +387,7 @@ export function Header({
               <h1 className="font-extrabold text-slate-900 text-sm sm:text-base md:text-lg leading-none tracking-tight truncate">
                 {settings.site_name || 'วิทยาลัยการอาชีพเชียงราย'}
               </h1>
-              <span className="text-[8px] sm:text-[9px] text-slate-400 font-semibold uppercase tracking-wide block leading-normal mt-1 whitespace-pre-line">
+              <span className="text-[8px] sm:text-[9px] text-slate-500 font-semibold uppercase tracking-wide block leading-normal mt-1 whitespace-pre-line">
                 {settings.site_name_en || 'College Web CMS System'}
               </span>
             </div>
