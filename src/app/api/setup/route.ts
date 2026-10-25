@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import fs from 'fs'
+import path from 'path'
+import { PrismaClient } from '@prisma/client'
 import {
   checkSystemRequirements,
   isSystemInstalled,
   runInstallation,
   InstallOptions,
 } from '@/lib/installer'
-import prisma from '@/lib/prisma'
+import prisma, { updatePrismaUrl } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,11 +33,72 @@ export async function POST(req: NextRequest) {
     const { action } = body
 
     if (action === 'test_db') {
+      const { dbHost, dbPort, dbUser, dbPass, dbName, saveConfig } = body
+
+      // If custom parameters are provided
+      if (dbHost && dbUser && dbName) {
+        const host = dbHost.trim()
+        const port = dbPort ? String(dbPort).trim() : '3306'
+        const user = dbUser.trim()
+        const pass = encodeURIComponent(dbPass ?? '')
+        const name = dbName.trim()
+        const testUrl = `mysql://${user}:${pass}@${host}:${port}/${name}?connection_limit=10&connect_timeout=30&pool_timeout=30`
+
+        const testClient = new PrismaClient({
+          datasources: { db: { url: testUrl } },
+        })
+
+        try {
+          const testResult: any[] = await testClient.$queryRawUnsafe('SELECT 1 as connected')
+          const tablesResult: any[] = await testClient.$queryRawUnsafe('SHOW TABLES')
+          const tableCount = Array.isArray(tablesResult) ? tablesResult.length : 0
+
+          if (saveConfig) {
+            // Persist to .env
+            const envPath = path.join(process.cwd(), '.env')
+            let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : ''
+            if (envContent.includes('DATABASE_URL=')) {
+              envContent = envContent.replace(/DATABASE_URL=.*$/m, `DATABASE_URL="${testUrl}"`)
+            } else {
+              envContent += `\nDATABASE_URL="${testUrl}"\n`
+            }
+            fs.writeFileSync(envPath, envContent, 'utf8')
+
+            // Update live Prisma singleton
+            updatePrismaUrl(testUrl)
+          }
+
+          return NextResponse.json({
+            success: true,
+            connected: Boolean(testResult[0]?.connected),
+            databaseName: name,
+            existingTablesCount: tableCount,
+            saved: Boolean(saveConfig),
+            message: `เชื่อมต่อฐานข้อมูล ${name} สำเร็จ (พบ ${tableCount} ตาราง)`,
+          })
+        } catch (err: any) {
+          return NextResponse.json({
+            success: false,
+            connected: false,
+            message: `ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ${err.message}`,
+          })
+        } finally {
+          await testClient.$disconnect()
+        }
+      }
+
+      // Default: test current prisma
       try {
         const testResult: any[] = await prisma.$queryRawUnsafe('SELECT 1 as connected')
+        const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')
+        const tableCount = Array.isArray(tablesResult) ? tablesResult.length : 0
+        const dbNameResult: any[] = await prisma.$queryRawUnsafe('SELECT DATABASE() as db')
+
         return NextResponse.json({
           success: true,
           connected: Boolean(testResult[0]?.connected),
+          databaseName: dbNameResult[0]?.db || 'cric_cms',
+          existingTablesCount: tableCount,
           message: 'เชื่อมต่อฐานข้อมูลสำเร็จ',
         })
       } catch (err: any) {
