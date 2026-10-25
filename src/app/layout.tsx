@@ -60,7 +60,14 @@ export default function RootLayout({
       lang="th"
       className={`${sarabun.variable} ${outfit.variable} scroll-smooth`}
     >
-      <head />
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+        />
+      </head>
       <body className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col antialiased">
         {children}
       </body>
