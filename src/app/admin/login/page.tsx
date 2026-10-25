@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Lock, User, AlertCircle, ArrowLeft, ArrowRight, Loader2, ShieldCheck } from 'lucide-react'
+import { Lock, User, AlertCircle, ArrowLeft, ArrowRight, Loader2, ShieldCheck, Server } from 'lucide-react'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -129,15 +129,26 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Back to site */}
-        <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition duration-200"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>กลับสู่หน้าเว็บไซต์หลัก</span>
-          </Link>
+        {/* Back to site & Setup */}
+        <div className="mt-8 text-center space-y-2.5">
+          <div>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition duration-200"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>กลับสู่หน้าเว็บไซต์หลัก</span>
+            </Link>
+          </div>
+          <div>
+            <Link
+              href="/setup"
+              className="inline-flex items-center gap-1.5 text-xs text-indigo-400/80 hover:text-indigo-300 transition duration-200"
+            >
+              <Server className="w-3.5 h-3.5" />
+              <span>ตัวช่วยติดตั้งเซิร์ฟเวอร์ใหม่ (Setup Wizard)</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

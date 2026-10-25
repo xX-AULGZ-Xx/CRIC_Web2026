@@ -44,3 +44,7 @@ next-env.d.ts
 # backups & user uploads
 /backups/
 /public/uploads/
+
+# installation lockfile
+installed.lock
+.installed
