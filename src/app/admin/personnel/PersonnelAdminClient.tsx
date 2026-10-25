@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { AdminUploadField } from '../AdminMediaPicker'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalSuccess, swalError, swalWarning } from '@/lib/sweetalert'
 
 interface CategoryOption {
   id: number
@@ -186,7 +187,7 @@ export function PersonnelAdminClient({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.name.trim()) {
-      alert('กรุณาระบุชื่อ-นามสกุลบุคลากร')
+      swalWarning('ข้อมูลไม่ครบถ้วน', 'กรุณาระบุชื่อ-นามสกุลบุคลากร')
       return
     }
     setSaving(true)
@@ -209,14 +210,19 @@ export function PersonnelAdminClient({
       setModalOpen(false)
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('บันทึกไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบข้อมูลบุคลากรนี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบข้อมูลบุคลากร?',
+      text: 'ข้อมูลบุคลากรและประวัติการแต่งตั้งจะถูกลบออกจากระบบ',
+      confirmButtonText: 'ลบข้อมูล',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -243,7 +249,7 @@ export function PersonnelAdminClient({
       .map((l) => l.trim())
       .filter(Boolean)
     if (lines.length < 2) {
-      alert('กรุณาวางข้อมูล CSV อย่างน้อย 1 แถวใต้บรรทัดหัวตาราง')
+      swalWarning('ข้อมูลไม่เพียงพอ', 'กรุณาวางข้อมูล CSV อย่างน้อย 1 แถวใต้บรรทัดหัวตาราง')
       return
     }
     const rows = lines.slice(1).map((line) => {
@@ -265,12 +271,12 @@ export function PersonnelAdminClient({
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Import failed')
-      alert(`นำเข้าข้อมูลบุคลากรสำเร็จ ${json.count} รายการ`)
+      await swalSuccess('สำเร็จ', `นำเข้าข้อมูลบุคลากรสำเร็จ ${json.count} รายการ`)
       setCsvModalOpen(false)
       setCsvText('')
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('นำเข้าไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }

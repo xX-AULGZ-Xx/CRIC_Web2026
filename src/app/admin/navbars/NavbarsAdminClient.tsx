@@ -33,6 +33,7 @@ import {
   FileCheck,
   MessageSquare,
 } from 'lucide-react'
+import { swalConfirm } from '@/lib/sweetalert'
 
 interface NavbarItem {
   id: number
@@ -243,7 +244,12 @@ export function NavbarsAdminClient({
       ? 'ยืนยันการลบเมนูย่อยนี้? เมนูย่อยระดับ 3 ทั้งหมดในหัวข้อนี้จะถูกลบไปด้วย'
       : 'ยืนยันการลบเมนูนี้?'
 
-    if (!confirm(confirmText)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบเมนู?',
+      text: confirmText,
+      confirmButtonText: 'ลบเมนู',
+    })
+    if (!ok) return
     setMsg('')
     setErr('')
     try {

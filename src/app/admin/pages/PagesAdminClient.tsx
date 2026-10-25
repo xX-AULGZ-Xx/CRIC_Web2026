@@ -43,6 +43,7 @@ import {
 } from 'lucide-react'
 import { AdminUploadField } from '../AdminMediaPicker'
 import CKEditorField from '../CKEditorField'
+import { swalConfirm, swalWarning, swalError } from '@/lib/sweetalert'
 import { normalizeImageUrl } from '@/lib/url-helper'
 
 export interface StaticPageItem {
@@ -422,7 +423,7 @@ export function PagesAdminClient({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) {
-      alert('กรุณากรอกชื่อเรื่องของหน้าเว็บ (Title)')
+      swalWarning('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกชื่อเรื่องของหน้าเว็บ (Title)')
       return
     }
 
@@ -476,7 +477,7 @@ export function PagesAdminClient({
       setViewMode('list')
       router.refresh()
     } catch (err: any) {
-      alert(err.message || 'เกิดข้อผิดพลาดในการบันทึก')
+      swalError('บันทึกไม่สำเร็จ', err.message || 'เกิดข้อผิดพลาดในการบันทึก')
     } finally {
       setSaving(false)
     }
@@ -485,10 +486,15 @@ export function PagesAdminClient({
   // Delete page
   const handleDelete = async (p: StaticPageItem) => {
     if (p.slug === 'home') {
-      alert('ไม่สามารถลบหน้าแรก (home) ของระบบได้')
+      swalWarning('ไม่อนุญาต', 'ไม่สามารถลบหน้าแรก (home) ของระบบได้')
       return
     }
-    if (!confirm(`ยืนยันการลบหน้าเว็บ "${p.title}" อย่างถาวร?`)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบหน้าเว็บ?',
+      text: `ยืนยันการลบหน้าเว็บ "${p.title}" อย่างถาวรใช่หรือไม่?`,
+      confirmButtonText: 'ลบหน้าเว็บ',
+    })
+    if (!ok) return
 
     try {
       const res = await fetch('/api/admin/cms', {

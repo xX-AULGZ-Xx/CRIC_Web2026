@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Award, UserPlus, Save, UserMinus, Search } from 'lucide-react'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalSuccess } from '@/lib/sweetalert'
 
 interface PersonRecord {
   id: number
@@ -75,7 +76,7 @@ export function ExecutivesAdminClient({
         }),
       })
       if (res.ok) {
-        alert('บันทึกลำดับการแสดงผลคณะผู้บริหารเรียบร้อยแล้ว')
+        swalSuccess('สำเร็จ', 'บันทึกลำดับการแสดงผลคณะผู้บริหารเรียบร้อยแล้ว')
         router.refresh()
       }
     } finally {
@@ -97,7 +98,12 @@ export function ExecutivesAdminClient({
   }
 
   const handleRemove = async (personId: number) => {
-    if (!confirm('ยืนยันการนำรายชื่อนี้ออกจากทำเนียบผู้บริหาร?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการนำออก?',
+      text: 'ต้องการนำรายชื่อนี้ออกจากทำเนียบผู้บริหารใช่หรือไม่? (ข้อมูลบุคลากรเดิมจะไม่ถูกลบ)',
+      confirmButtonText: 'นำออก',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Images, Plus, Pencil, Trash2, X, ExternalLink, Check, EyeOff } from 'lucide-react'
 import { AdminUploadField } from '../AdminMediaPicker'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalWarning, swalError } from '@/lib/sweetalert'
 
 interface SliderItem {
   id: number
@@ -63,7 +64,7 @@ export function SlidersAdminClient({ initialSliders }: { initialSliders: SliderI
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.image_path) {
-      alert('กรุณาอัปโหลดหรือระบุพาร์ธรูปภาพสไลด์')
+      swalWarning('ข้อมูลไม่ครบถ้วน', 'กรุณาอัปโหลดหรือระบุพาร์ธรูปภาพสไลด์')
       return
     }
     setSaving(true)
@@ -82,14 +83,19 @@ export function SlidersAdminClient({ initialSliders }: { initialSliders: SliderI
       setModalOpen(false)
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('บันทึกไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบสไลด์แบนเนอร์นี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบภาพสไลด์?',
+      text: 'ภาพสไลด์แบนเนอร์นี้จะถูกลบออกจากระบบ',
+      confirmButtonText: 'ลบภาพสไลด์',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

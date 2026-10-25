@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import CKEditorField from '../CKEditorField'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalSuccess, swalError } from '@/lib/sweetalert'
 
 interface ItaLinkItem {
   id?: number
@@ -231,12 +232,12 @@ export function ItaAdminClient({
 
   const handleCloneYear = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (
-      !confirm(
-        'การโคลนข้อมูลจะทำการคัดลอกโครงสร้างหัวข้อ ตาราง รายการประเมิน O1-O43 และลิงก์ทั้งหมดไปยังปีงบประมาณปลายทาง ยืนยันดำเนินการ?'
-      )
-    )
-      return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการโคลนข้อมูล?',
+      text: 'การโคลนข้อมูลจะทำการคัดลอกโครงสร้างหัวข้อ ตาราง รายการประเมิน O1-O43 และลิงก์ทั้งหมดไปยังปีงบประมาณปลายทาง',
+      confirmButtonText: 'ยืนยันโคลนข้อมูล',
+    })
+    if (!ok) return
     setMsg('')
     setErr('')
     try {
@@ -264,12 +265,12 @@ export function ItaAdminClient({
   }
 
   const handleDeleteYear = async () => {
-    if (
-      !confirm(
-        `ยืนยันที่จะลบปีงบประมาณ พ.ศ. ${selectedYear} และหัวข้อ/ข้อมูลประเมินทั้งหมดหรือไม่?`
-      )
-    )
-      return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบปีงบประมาณ?',
+      text: `ยืนยันที่จะลบปีงบประมาณ พ.ศ. ${selectedYear} และหัวข้อ/ข้อมูลประเมินทั้งหมดอย่างถาวรหรือไม่?`,
+      confirmButtonText: 'ลบปีงบประมาณ',
+    })
+    if (!ok) return
     setMsg('')
     setErr('')
     try {
@@ -459,7 +460,12 @@ export function ItaAdminClient({
         ? 'ลบหัวข้อรองนี้? ตารางประเมินด้านในจะถูกลบไปด้วย'
         : 'ลบตารางนี้อย่างถาวร?'
 
-    if (!confirm(confirmMsg)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบโครงสร้าง?',
+      text: confirmMsg,
+      confirmButtonText: 'ลบ',
+    })
+    if (!ok) return
     setMsg('')
     setErr('')
     try {
@@ -560,7 +566,7 @@ export function ItaAdminClient({
           return { ...prev, links: newLinks }
         })
       } else {
-        alert('อัปโหลดไฟล์ไม่สำเร็จ')
+        swalError('อัปโหลดไฟล์ไม่สำเร็จ')
         setItemForm((prev) => {
           const newLinks = [...prev.links]
           newLinks[index] = { ...newLinks[index], uploading: false }
@@ -568,7 +574,7 @@ export function ItaAdminClient({
         })
       }
     } catch (e) {
-      alert('เกิดข้อผิดพลาดในการอัปโหลด')
+      swalError('เกิดข้อผิดพลาดในการอัปโหลด')
       setItemForm((prev) => {
         const newLinks = [...prev.links]
         newLinks[index] = { ...newLinks[index], uploading: false }
@@ -653,7 +659,12 @@ export function ItaAdminClient({
   }
 
   const handleDeleteItem = async (id: number, code: string) => {
-    if (!confirm(`ยืนยันลบข้อมูลเกณฑ์ ${code} แถวนี้?`)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบ?',
+      text: `ยืนยันลบข้อมูลเกณฑ์ ${code} แถวนี้ใช่หรือไม่?`,
+      confirmButtonText: 'ลบข้อมูลเกณฑ์',
+    })
+    if (!ok) return
     setMsg('')
     setErr('')
     try {

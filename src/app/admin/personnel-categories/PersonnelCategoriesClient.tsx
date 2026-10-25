@@ -27,6 +27,7 @@ import {
   Compass,
 } from 'lucide-react'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm } from '@/lib/sweetalert'
 
 interface CategoryItem {
   id: number
@@ -290,7 +291,12 @@ export function PersonnelCategoriesClient({
     const confirmText = isSub
       ? 'ยืนยันลบแผนกย่อยนี้?'
       : 'ข้อมูลบุคลากรและแผนกย่อยทั้งหมดในหมวดนี้จะถูกลบออก ยืนยัน?'
-    if (!confirm(confirmText)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบ?',
+      text: confirmText,
+      confirmButtonText: 'ลบ',
+    })
+    if (!ok) return
     setMsg('')
     setErr('')
     try {

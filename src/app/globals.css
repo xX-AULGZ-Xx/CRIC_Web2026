@@ -49,6 +49,36 @@ body {
   border-color: var(--theme-primary, #ea580c) !important;
 }
 
+/* SweetAlert2 Custom Styling */
+div:where(.swal2-container) {
+  font-family: var(--font-sans) !important;
+  z-index: 99999 !important;
+}
+
+div:where(.swal2-container) .swal2-popup {
+  border-radius: 1.25rem !important;
+  padding: 1.5rem !important;
+}
+
+div:where(.swal2-container) .swal2-title {
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+}
+
+div:where(.swal2-container) .swal2-html-container {
+  font-size: 0.925rem !important;
+  color: #475569 !important;
+  line-height: 1.6 !important;
+}
+
+div:where(.swal2-container) button.swal2-styled {
+  border-radius: 0.75rem !important;
+  font-weight: 600 !important;
+  padding: 0.625rem 1.25rem !important;
+  font-size: 0.875rem !important;
+}
+
 .hover\:bg-indigo-650:hover,
 [class*="hover:bg-indigo-650"]:hover,
 .hover\:bg-indigo-700:hover,

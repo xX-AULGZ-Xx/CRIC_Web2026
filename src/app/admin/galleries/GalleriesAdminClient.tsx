@@ -16,6 +16,7 @@ import {
   Images,
 } from 'lucide-react'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalSuccess, swalError } from '@/lib/sweetalert'
 
 interface GalleryPhoto {
   id: number
@@ -113,7 +114,12 @@ export function GalleriesAdminClient({
   }
 
   const handleDeleteAlbum = async (id: number) => {
-    if (!confirm('ยืนยันการลบอัลบั้มภาพนี้และรูปภาพภายในทั้งหมด?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบอัลบั้มภาพ?',
+      text: 'อัลบั้มภาพนี้และรูปภาพทั้งหมดภายในจะถูกลบออกจากระบบอย่างถาวร',
+      confirmButtonText: 'ลบอัลบั้ม',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -158,7 +164,7 @@ export function GalleriesAdminClient({
       })
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message)
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -167,7 +173,12 @@ export function GalleriesAdminClient({
 
   const handleBulkDeletePhotos = async () => {
     if (selectedPhotoIds.length === 0) return
-    if (!confirm(`ยืนยันการลบรูปภาพที่เลือกจำนวน ${selectedPhotoIds.length} รูป?`)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบรูปภาพ?',
+      text: `ต้องการลบรูปภาพที่เลือกจำนวน ${selectedPhotoIds.length} รูป ใช่หรือไม่?`,
+      confirmButtonText: 'ลบรูปภาพ',
+    })
+    if (!ok) return
     await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -203,7 +214,7 @@ export function GalleriesAdminClient({
       if (!res.ok) throw new Error(json.error || 'ไม่สามารถดึงข้อมูล Immich ได้')
       setImmichAlbums(Array.isArray(json.albums) ? json.albums : [])
     } catch (err: any) {
-      alert(err.message)
+      swalError('ไม่สามารถดึงข้อมูล Immich ได้', err.message)
     } finally {
       setLoadingImmich(false)
     }
@@ -227,11 +238,11 @@ export function GalleriesAdminClient({
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Import failed')
-      alert(`นำเข้าอัลบั้ม "${album.albumName}" (${json.count} รูป) เรียบร้อยแล้ว`)
+      await swalSuccess('นำเข้าอัลบั้มสำเร็จ', `นำเข้าอัลบั้ม "${album.albumName}" (${json.count} รูป) เรียบร้อยแล้ว`)
       setImmichModal(false)
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('นำเข้าไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }
@@ -252,12 +263,12 @@ export function GalleriesAdminClient({
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'นำเข้าไม่สำเร็จ')
-      alert(`นำเข้ารูปภาพสำเร็จ ${json.count} รูป`)
+      await swalSuccess('นำเข้ารูปภาพสำเร็จ', `นำเข้ารูปภาพสำเร็จ ${json.count} รูป`)
       setLinkModal(false)
       setLinkForm({ title: '', description: '', shared_url: '' })
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('นำเข้าไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }

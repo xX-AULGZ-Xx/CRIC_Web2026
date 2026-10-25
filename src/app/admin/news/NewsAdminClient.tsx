@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import CKEditorField from '../CKEditorField'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalSuccess, swalError, swalWarning } from '@/lib/sweetalert'
 
 const FacebookIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -223,7 +224,7 @@ export function NewsAdminClient({
         cover_image: json.path || json.url,
       }))
     } catch (err: any) {
-      alert(err.message)
+      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message)
     } finally {
       e.target.value = ''
     }
@@ -245,7 +246,7 @@ export function NewsAdminClient({
         pdf_path: json.path || json.url,
       }))
     } catch (err: any) {
-      alert(err.message)
+      swalError('อัปโหลด PDF ไม่สำเร็จ', err.message)
     } finally {
       e.target.value = ''
     }
@@ -271,7 +272,7 @@ export function NewsAdminClient({
         additional_images: [...prev.additional_images, ...newPaths],
       }))
     } catch (err: any) {
-      alert(err.message)
+      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message)
     } finally {
       setUploadingMulti(false)
       e.target.value = ''
@@ -320,7 +321,7 @@ export function NewsAdminClient({
 
       setForm((prev) => ({ ...prev, cover_image: json.path || json.url }))
     } catch (err: any) {
-      alert('ไม่สามารถหมุนภาพได้: ' + (err.message || ''))
+      swalError('ไม่สามารถหมุนภาพได้', err.message || '')
     } finally {
       setRotating(false)
     }
@@ -393,7 +394,7 @@ export function NewsAdminClient({
   // Facebook Import Actions
   const handlePreviewFb = async () => {
     if (!fbUrl.trim()) {
-      alert('กรุณากรอก URL โพสต์ Facebook')
+      swalWarning('กรุณากรอกข้อมูล', 'กรุณากรอก URL โพสต์ Facebook')
       return
     }
     setFbLoading(true)
@@ -417,7 +418,7 @@ export function NewsAdminClient({
       setFbSelectedImages(imgList)
       setFbCoverImage(imgList.length > 0 ? imgList[0] : '')
     } catch (err: any) {
-      alert(err.message)
+      swalError('ไม่สามารถดึงข้อมูล Facebook ได้', err.message)
     } finally {
       setFbLoading(false)
     }
@@ -503,9 +504,9 @@ export function NewsAdminClient({
       setFbCoverImage('')
       setFbUrl('')
       setFbOpen(false)
-      alert('นำเข้าข้อมูลและรูปภาพจาก Facebook สำเร็จ!')
+      swalSuccess('สำเร็จ', 'นำเข้าข้อมูลและรูปภาพจาก Facebook สำเร็จ!')
     } catch (err: any) {
-      alert('เกิดข้อผิดพลาดในการนำเข้า: ' + err.message)
+      swalError('นำเข้าไม่สำเร็จ', err.message)
     } finally {
       setFbImporting(false)
     }
@@ -528,7 +529,7 @@ export function NewsAdminClient({
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     if (!form.title.trim()) {
-      alert('กรุณาระบุหัวข้อข่าว')
+      swalWarning('ข้อมูลไม่ครบถ้วน', 'กรุณาระบุหัวข้อข่าว')
       return
     }
     setSaving(true)
@@ -551,14 +552,19 @@ export function NewsAdminClient({
       setModalOpen(false)
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('บันทึกไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบรายการข่าวนี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบข่าว?',
+      text: 'รายการข่าวนี้และรูปภาพประกอบจะถูกลบออกจากระบบอย่างถาวร',
+      confirmButtonText: 'ลบข่าว',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -587,7 +593,12 @@ export function NewsAdminClient({
   }
 
   const handleDeleteCategory = async (id: number) => {
-    if (!confirm('ยืนยันการลบหมวดหมู่นี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบหมวดหมู่?',
+      text: 'ต้องการลบหมวดหมู่นี้ใช่หรือไม่? (ข่าวในหมวดนี้จะกลายเป็นไม่มีหมวด)',
+      confirmButtonText: 'ลบหมวดหมู่',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1189,8 +1200,13 @@ export function NewsAdminClient({
                           {form.additional_images.length > 0 && (
                             <button
                               type="button"
-                              onClick={() => {
-                                if (confirm('ต้องการลบภาพกิจกรรมเพิ่มเติมทั้งหมด?')) {
+                              onClick={async () => {
+                                const ok = await swalConfirm({
+                                  title: 'ยืนยันการลบรูปทั้งหมด?',
+                                  text: 'ต้องการลบภาพกิจกรรมเพิ่มเติมทั้งหมดออกจากข่าวนี้ใช่หรือไม่?',
+                                  confirmButtonText: 'ลบทั้งหมด',
+                                })
+                                if (ok) {
                                   setForm({ ...form, additional_images: [] })
                                 }
                               }}

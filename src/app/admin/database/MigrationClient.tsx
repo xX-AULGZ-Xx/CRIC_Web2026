@@ -12,6 +12,7 @@ import {
   Play,
   Loader2,
 } from 'lucide-react'
+import { swalConfirm, swalSuccess, swalError, swalWarning } from '@/lib/sweetalert'
 
 interface TableInfo {
   name: string
@@ -40,7 +41,7 @@ export function MigrationClient({ tables }: { tables: TableInfo[] }) {
 
   const handleExportSql = async () => {
     if (selectedTables.length === 0) {
-      alert('กรุณาเลือกตารางที่ต้องการส่งออกอย่างน้อย 1 ตาราง')
+      swalWarning('กรุณาเลือกตาราง', 'กรุณาเลือกตารางที่ต้องการส่งออกอย่างน้อย 1 ตาราง')
       return
     }
     setExporting(true)
@@ -63,7 +64,7 @@ export function MigrationClient({ tables }: { tables: TableInfo[] }) {
       a.download = `cric_db_${new Date().toISOString().slice(0, 10)}.sql`
       a.click()
     } catch (err: any) {
-      alert(err.message)
+      swalError('ส่งออกข้อมูลไม่สำเร็จ', err.message)
     } finally {
       setExporting(false)
     }
@@ -82,7 +83,12 @@ export function MigrationClient({ tables }: { tables: TableInfo[] }) {
   const handleImportSql = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!sqlInput.trim()) return
-    if (!confirm('ยืนยันการรันคำสั่ง SQL ลงในฐานข้อมูล?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการรันคำสั่ง SQL?',
+      text: 'การรันคำสั่ง SQL จะทำการแก้ไขหรือแทรกข้อมูลลงในฐานข้อมูลจริงโดยตรง',
+      confirmButtonText: 'ยืนยันการรัน SQL',
+    })
+    if (!ok) return
     setImporting(true)
     try {
       const res = await fetch('/api/admin/cms', {
@@ -96,11 +102,11 @@ export function MigrationClient({ tables }: { tables: TableInfo[] }) {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Import failed')
-      alert(`ประมวลผลคำสั่ง SQL สำเร็จ (${json.executed} คำสั่ง)`)
+      await swalSuccess('สำเร็จ', `ประมวลผลคำสั่ง SQL สำเร็จ (${json.executed} คำสั่ง)`)
       setSqlInput('')
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('การนำเข้า SQL ล้มเหลว', err.message)
     } finally {
       setImporting(false)
     }

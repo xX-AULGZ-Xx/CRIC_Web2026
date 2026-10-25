@@ -18,6 +18,7 @@ import {
 import { AdminUploadField } from '../AdminMediaPicker'
 import CKEditorField from '../CKEditorField'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalSuccess, swalError } from '@/lib/sweetalert'
 
 interface CurriculumItem {
   id: number
@@ -151,7 +152,7 @@ export function CurriculumAdminClient({
         }),
       })
       if (res.ok) {
-        alert('บันทึกข้อความเกริ่นนำหน้าหลักสูตรเรียบร้อยแล้ว')
+        swalSuccess('สำเร็จ', 'บันทึกข้อความเกริ่นนำหน้าหลักสูตรเรียบร้อยแล้ว')
         router.refresh()
       }
     } finally {
@@ -178,7 +179,7 @@ export function CurriculumAdminClient({
         gallery_images: [...prev.gallery_images, ...paths],
       }))
     } catch (err: any) {
-      alert(err.message)
+      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message)
     } finally {
       setUploadingGallery(false)
       e.target.value = ''
@@ -204,14 +205,19 @@ export function CurriculumAdminClient({
       setModalOpen(false)
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('บันทึกไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบหลักสูตรนี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบหลักสูตร?',
+      text: 'ข้อมูลหลักสูตรและรูปภาพประกอบจะถูกลบออกจากระบบ',
+      confirmButtonText: 'ลบหลักสูตร',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -235,7 +241,7 @@ export function CurriculumAdminClient({
       }),
     })
     if (res.ok) {
-      alert('เพิ่มลิงก์หลักสูตรเข้าสู่เมนูเว็บไซต์เรียบร้อยแล้ว')
+      swalSuccess('สำเร็จ', 'เพิ่มลิงก์หลักสูตรเข้าสู่เมนูเว็บไซต์เรียบร้อยแล้ว')
       setNavModalOpen(false)
       router.refresh()
     }

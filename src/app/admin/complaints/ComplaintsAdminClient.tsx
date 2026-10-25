@@ -12,6 +12,7 @@ import {
   Search,
   Paperclip,
 } from 'lucide-react'
+import { swalConfirm } from '@/lib/sweetalert'
 
 interface ComplaintItem {
   id: number
@@ -84,7 +85,12 @@ export function ComplaintsAdminClient({
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบข้อมูลเรื่องร้องเรียนนี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบเรื่องร้องเรียน?',
+      text: 'ข้อมูลและหลักฐานแนบของเรื่องร้องเรียนนี้จะถูกลบอย่างถาวร',
+      confirmButtonText: 'ลบเรื่องร้องเรียน',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

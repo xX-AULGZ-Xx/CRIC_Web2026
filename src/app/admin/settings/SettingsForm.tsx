@@ -14,6 +14,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { AdminUploadField } from '../AdminMediaPicker'
+import { swalToast, swalError } from '@/lib/sweetalert'
 
 const THEME_COLORS = [
   { id: 'indigo', label: 'Indigo (คราม)', bg: 'bg-indigo-600' },
@@ -97,10 +98,11 @@ export function SettingsForm({
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'บันทึกไม่สำเร็จ')
       setSavedToast(true)
+      swalToast('บันทึกการตั้งค่าเรียบร้อยแล้ว', 'success')
       setTimeout(() => setSavedToast(false), 3000)
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('บันทึกไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }

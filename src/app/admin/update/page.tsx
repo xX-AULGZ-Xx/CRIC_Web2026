@@ -10,6 +10,7 @@ import {
   Sparkles,
   Loader2,
 } from 'lucide-react'
+import { swalError, swalSuccess } from '@/lib/sweetalert'
 
 export default function AdminUpdatePage() {
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
@@ -27,8 +28,9 @@ export default function AdminUpdatePage() {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Error')
       setMessage(successText)
+      swalSuccess('สำเร็จ', successText)
     } catch (err: any) {
-      alert(err.message)
+      swalError('เกิดข้อผิดพลาด', err.message)
     } finally {
       setLoadingAction(null)
     }

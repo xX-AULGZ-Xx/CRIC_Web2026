@@ -11,6 +11,7 @@ import {
   Loader2,
   ShieldCheck,
 } from 'lucide-react'
+import { swalConfirm, swalSuccess, swalError } from '@/lib/sweetalert'
 
 interface BackupFile {
   name: string
@@ -40,14 +41,19 @@ export function BackupsAdminClient({
       if (!res.ok) throw new Error(json.error || 'สร้างไฟล์สำรองไม่สำเร็จ')
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('สร้างไฟล์สำรองไม่สำเร็จ', err.message)
     } finally {
       setCreating(false)
     }
   }
 
   const handleRestore = async (name: string) => {
-    if (!confirm(`ยืนยันการกู้คืนข้อมูลจากไฟล์สำรอง "${name}"?`)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการกู้คืนข้อมูล?',
+      text: `ต้องการกู้คืนข้อมูลจากไฟล์สำรอง "${name}" ใช่หรือไม่? ข้อมูลปัจจุบันอาจถูกเขียนทับ`,
+      confirmButtonText: 'ยืนยันกู้คืน',
+    })
+    if (!ok) return
     setRestoringName(name)
     try {
       const res = await fetch('/api/admin/cms', {
@@ -61,17 +67,22 @@ export function BackupsAdminClient({
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'กู้คืนไม่สำเร็จ')
-      alert('กู้คืนข้อมูลจากไฟล์สำรองเรียบร้อยแล้ว')
+      await swalSuccess('สำเร็จ', 'กู้คืนข้อมูลจากไฟล์สำรองเรียบร้อยแล้ว')
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('เกิดข้อผิดพลาด', err.message)
     } finally {
       setRestoringName(null)
     }
   }
 
   const handleDelete = async (name: string) => {
-    if (!confirm(`ยืนยันการลบไฟล์สำรอง "${name}"?`)) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบไฟล์สำรอง?',
+      text: `ต้องการลบไฟล์สำรอง "${name}" อย่างถาวรใช่หรือไม่?`,
+      confirmButtonText: 'ลบไฟล์สำรอง',
+    })
+    if (!ok) return
     await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

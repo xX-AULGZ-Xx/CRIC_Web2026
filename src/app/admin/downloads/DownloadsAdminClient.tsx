@@ -14,6 +14,7 @@ import {
   X,
   ExternalLink,
 } from 'lucide-react'
+import { swalConfirm, swalSuccess, swalError, swalWarning } from '@/lib/sweetalert'
 
 interface DownloadCat {
   id: number
@@ -101,7 +102,7 @@ export function DownloadsAdminClient({
         file_size: json.file_size,
       }))
     } catch (err: any) {
-      alert(err.message)
+      swalError('อัปโหลดไฟล์ไม่สำเร็จ', err.message)
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -111,7 +112,7 @@ export function DownloadsAdminClient({
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!form.title.trim() || !form.file_path.trim()) {
-      alert('กรุณาระบุชื่อเอกสารและอัปโหลดไฟล์')
+      swalWarning('ข้อมูลไม่ครบถ้วน', 'กรุณาระบุชื่อเอกสารและอัปโหลดไฟล์')
       return
     }
     setSaving(true)
@@ -138,7 +139,12 @@ export function DownloadsAdminClient({
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบไฟล์เอกสารนี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบไฟล์เอกสาร?',
+      text: 'ไฟล์เอกสารนี้จะถูกลบออกจากระบบดาวน์โหลด',
+      confirmButtonText: 'ลบเอกสาร',
+    })
+    if (!ok) return
     await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -429,7 +435,12 @@ export function DownloadsAdminClient({
                     </button>
                     <button
                       onClick={async () => {
-                        if (!confirm('ลบหมวดหมู่นี้?')) return
+                        const ok = await swalConfirm({
+                          title: 'ยืนยันการลบหมวดหมู่?',
+                          text: `ต้องการลบหมวดหมู่ "${c.name}" ใช่หรือไม่?`,
+                          confirmButtonText: 'ลบหมวดหมู่',
+                        })
+                        if (!ok) return
                         await fetch('/api/admin/cms', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },

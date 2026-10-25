@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { normalizeImageUrl } from '@/lib/url-helper'
+import { swalConfirm, swalError } from '@/lib/sweetalert'
 
 interface MediaRecord {
   id: number
@@ -50,7 +51,7 @@ export function MediaAdminClient({ initialMedia }: { initialMedia: MediaRecord[]
       if (!res.ok) throw new Error(json.error || 'Upload failed')
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('อัปโหลดไฟล์ไม่สำเร็จ', err.message)
     } finally {
       setUploading(false)
       e.target.value = ''
@@ -83,7 +84,12 @@ export function MediaAdminClient({ initialMedia }: { initialMedia: MediaRecord[]
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบไฟล์นี้ออกจากระบบและเซิร์ฟเวอร์?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบไฟล์?',
+      text: 'ไฟล์นี้จะถูกลบออกจากระบบและเซิร์ฟเวอร์อย่างถาวร',
+      confirmButtonText: 'ลบไฟล์',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

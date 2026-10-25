@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Briefcase, Plus, Pencil, Trash2, ArrowUp, ArrowDown, X } from 'lucide-react'
+import { swalConfirm } from '@/lib/sweetalert'
 
 interface PositionItem {
   id: number
@@ -49,7 +50,12 @@ export function PersonnelPositionsClient({
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบตำแหน่งบุคลากรนี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบตำแหน่ง?',
+      text: 'ต้องการลบตำแหน่งบุคลากรนี้ใช่หรือไม่?',
+      confirmButtonText: 'ลบตำแหน่ง',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

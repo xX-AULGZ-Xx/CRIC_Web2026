@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { UserCheck, Plus, Pencil, Trash2, Shield, X } from 'lucide-react'
+import { swalConfirm, swalError } from '@/lib/sweetalert'
 
 interface UserRecord {
   id: number
@@ -100,14 +101,19 @@ export function UsersAdminClient({
       setModalOpen(false)
       router.refresh()
     } catch (err: any) {
-      alert(err.message)
+      swalError('บันทึกไม่สำเร็จ', err.message)
     } finally {
       setSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!confirm('ยืนยันการลบบัญชีผู้ใช้งานนี้?')) return
+    const ok = await swalConfirm({
+      title: 'ยืนยันการลบบัญชีผู้ใช้งาน?',
+      text: 'ต้องการลบบัญชีผู้ใช้งานนี้ออกจากระบบใช่หรือไม่?',
+      confirmButtonText: 'ลบบัญชี',
+    })
+    if (!ok) return
     const res = await fetch('/api/admin/cms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -115,7 +121,7 @@ export function UsersAdminClient({
     })
     const json = await res.json()
     if (!res.ok) {
-      alert(json.error || 'ไม่สามารถลบได้')
+      swalError('ไม่สามารถลบได้', json.error || 'เกิดข้อผิดพลาดในการลบ')
       return
     }
     router.refresh()
