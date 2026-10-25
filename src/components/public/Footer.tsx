@@ -20,7 +20,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 
   const quickLinks: { label: string; url: string }[] = []
   for (let i = 1; i <= 6; i++) {
-    const lbl = settings[`footer_link_${i}_label`] ?? defaultLinks[i].label
+    const lbl = settings[`footer_link_${i}_label`] || settings[`footer_link_${i}_title`] || defaultLinks[i].label
     const rawUrl = settings[`footer_link_${i}_url`] || defaultLinks[i].url
     if (lbl && lbl.trim() !== '') {
       quickLinks.push({
@@ -56,7 +56,7 @@ export function Footer({ settings }: { settings: SiteSettings }) {
             </span>
           </Link>
           <p className="text-xs text-slate-400 max-w-sm">
-            {settings.footer_desc ||
+            {settings.footer_desc || settings.footer_description ||
               'วิทยาลัยมุ่งมั่นในการเรียนรู้อย่างต่อเนื่อง พัฒนาทักษะวิชาชีพ และนำเทคโนโลยีเข้ามาส่งเสริมสังคมในระดับประเทศและสากล'}
           </p>
           <div className="flex items-center gap-3">

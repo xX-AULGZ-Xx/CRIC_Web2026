@@ -9,27 +9,27 @@ export function Footer({ settings }: { settings: SiteSettings }) {
 
   const quickLinks = [
     {
-      label: settings.footer_link_1_label || 'เกี่ยวกับวิทยาลัย',
+      label: settings.footer_link_1_label || settings.footer_link_1_title || 'เกี่ยวกับวิทยาลัย',
       url: mapLegacyUrl(settings.footer_link_1_url || '/pages/about'),
     },
     {
-      label: settings.footer_link_2_label || 'สาขาวิชาที่เปิดสอน',
+      label: settings.footer_link_2_label || settings.footer_link_2_title || 'สาขาวิชาที่เปิดสอน',
       url: mapLegacyUrl(settings.footer_link_2_url || '/curriculum'),
     },
     {
-      label: settings.footer_link_3_label || 'ทำเนียบบุคลากร',
+      label: settings.footer_link_3_label || settings.footer_link_3_title || 'ทำเนียบบุคลากร',
       url: mapLegacyUrl(settings.footer_link_3_url || '/personnel'),
     },
     {
-      label: settings.footer_link_4_label || 'ข่าวสารประชาสัมพันธ์',
+      label: settings.footer_link_4_label || settings.footer_link_4_title || 'ข่าวสารประชาสัมพันธ์',
       url: mapLegacyUrl(settings.footer_link_4_url || '/news'),
     },
     {
-      label: settings.footer_link_5_label || 'คลังรูปกิจกรรม',
+      label: settings.footer_link_5_label || settings.footer_link_5_title || 'คลังรูปกิจกรรม',
       url: mapLegacyUrl(settings.footer_link_5_url || '/gallery'),
     },
     {
-      label: settings.footer_link_6_label || 'ศูนย์ดาวน์โหลด',
+      label: settings.footer_link_6_label || settings.footer_link_6_title || 'ศูนย์ดาวน์โหลด',
       url: mapLegacyUrl(settings.footer_link_6_url || '/downloads'),
     },
   ]

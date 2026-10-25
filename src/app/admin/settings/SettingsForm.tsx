@@ -389,8 +389,8 @@ export function SettingsForm({
       {/* 4. Footer & 6 Quick Links */}
       <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
         <h2 className="font-bold text-slate-800 flex items-center gap-2 text-base pb-3 border-b border-slate-100">
-          <LayoutGrid className="w-5 h-5 text-indigo-600" />
-          4. ส่วนท้ายเว็บไซต์ (Footer) และลิงก์หน่วยงานที่เกี่ยวข้อง
+          <LayoutGrid className="w-5 h-5 text-orange-600" />
+          4. ส่วนท้ายเว็บไซต์ (Footer) และลิงก์ด่วน 6 รายการ
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -398,11 +398,15 @@ export function SettingsForm({
             <label className="block text-sm font-semibold text-slate-700 mb-1">
               ข้อความแนะนำส่วนท้ายเว็บ (Footer Description)
             </label>
-            <input
-              type="text"
-              value={form.footer_description || ''}
-              onChange={(e) => setVal('footer_description', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800"
+            <textarea
+              rows={2}
+              value={form.footer_desc !== undefined ? form.footer_desc : (form.footer_description || '')}
+              onChange={(e) => {
+                setVal('footer_desc', e.target.value)
+                setVal('footer_description', e.target.value)
+              }}
+              placeholder="ข้อความแนะนำวิทยาลัยส่วนท้ายเว็บ..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-orange-500 transition resize-none"
             />
           </div>
           <div>
@@ -413,37 +417,111 @@ export function SettingsForm({
               type="text"
               value={form.footer_powered_by || ''}
               onChange={(e) => setVal('footer_powered_by', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800"
+              placeholder="เช่น Powered by งานศูนย์ดิจิทัลและสื่อสารองค์กร..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-orange-500 transition"
             />
+            <p className="text-xs text-slate-400 mt-1.5">
+              แสดงข้อความลิขสิทธิ์และทีมพัฒนาดิจิทัลด้านล่างสุดของเว็บไซต์
+            </p>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-sm font-semibold text-slate-700">
-            ลิงก์ด่วนส่วนท้ายเว็บไซต์ (6 รายการ)
-          </label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[1, 2, 3, 4, 5, 6].map((num) => (
-              <div
-                key={num}
-                className="flex gap-2 p-2.5 bg-slate-50 rounded-xl border border-slate-200"
-              >
-                <input
-                  type="text"
-                  value={form[`footer_link_${num}_title`] || ''}
-                  onChange={(e) => setVal(`footer_link_${num}_title`, e.target.value)}
-                  placeholder={`ชื่อลิงก์ที่ ${num}`}
-                  className="w-1/2 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
-                />
-                <input
-                  type="text"
-                  value={form[`footer_link_${num}_url`] || ''}
-                  onChange={(e) => setVal(`footer_link_${num}_url`, e.target.value)}
-                  placeholder="URL เช่น /ita หรือ https://..."
-                  className="w-1/2 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs"
-                />
-              </div>
-            ))}
+        <div className="space-y-3 pt-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-100 pb-2">
+            <label className="block text-sm font-bold text-slate-800">
+              ลิงก์ด่วนส่วนท้ายเว็บไซต์ (Quick Links - 6 รายการ)
+            </label>
+            <span className="text-xs text-slate-400">
+              แสดง 2 คอลัมน์ในส่วนท้ายของทุกหน้าเว็บ (Footer)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((num) => {
+              const defaultLabel =
+                num === 1
+                  ? 'เกี่ยวกับวิทยาลัย'
+                  : num === 2
+                  ? 'สาขาวิชาที่เปิดสอน'
+                  : num === 3
+                  ? 'ทำเนียบบุคลากร'
+                  : num === 4
+                  ? 'ข่าวสารประชาสัมพันธ์'
+                  : num === 5
+                  ? 'คลังรูปกิจกรรม'
+                  : 'ศูนย์ดาวน์โหลด'
+
+              const defaultUrl =
+                num === 1
+                  ? '/about'
+                  : num === 2
+                  ? '/curriculum'
+                  : num === 3
+                  ? '/personnel'
+                  : num === 4
+                  ? '/news'
+                  : num === 5
+                  ? '/gallery'
+                  : '/downloads'
+
+              const currentLabel =
+                form[`footer_link_${num}_label`] !== undefined
+                  ? form[`footer_link_${num}_label`]
+                  : form[`footer_link_${num}_title`] !== undefined
+                  ? form[`footer_link_${num}_title`]
+                  : defaultLabel
+
+              const currentUrl =
+                form[`footer_link_${num}_url`] !== undefined
+                  ? form[`footer_link_${num}_url`]
+                  : defaultUrl
+
+              return (
+                <div
+                  key={num}
+                  className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-3 hover:border-orange-300 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-orange-600 flex items-center gap-1.5">
+                      <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-[11px] font-bold">
+                        {num}
+                      </span>
+                      ลิงก์ด่วนที่ {num}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                      ข้อความบนลิงก์ (Label)
+                    </label>
+                    <input
+                      type="text"
+                      value={currentLabel}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        setVal(`footer_link_${num}_label`, val)
+                        setVal(`footer_link_${num}_title`, val)
+                      }}
+                      placeholder={`เช่น ${defaultLabel}`}
+                      className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                      ลิงก์ปลายทาง (URL)
+                    </label>
+                    <input
+                      type="text"
+                      value={currentUrl}
+                      onChange={(e) => setVal(`footer_link_${num}_url`, e.target.value)}
+                      placeholder={`เช่น ${defaultUrl}`}
+                      className="w-full bg-white border border-slate-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 rounded-xl px-3 py-2 text-xs text-slate-800 outline-none font-mono transition"
+                    />
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
