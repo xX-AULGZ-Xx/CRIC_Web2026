@@ -31,9 +31,9 @@ export function TopBar({ settings }: { settings: SiteSettings }) {
         </div>
 
         <div className="flex items-center gap-4">
-          {settings.social_facebook && (
+          {(settings.social_facebook || settings.facebook_url) && (
             <a
-              href={settings.social_facebook}
+              href={settings.social_facebook || settings.facebook_url}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white transition text-xs flex items-center gap-1"
@@ -41,9 +41,9 @@ export function TopBar({ settings }: { settings: SiteSettings }) {
               <span>Facebook</span>
             </a>
           )}
-          {settings.social_line && (
+          {(settings.social_line || settings.line_id) && (
             <a
-              href={settings.social_line}
+              href={settings.social_line || settings.line_id}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-white transition text-xs flex items-center gap-1"

@@ -64,9 +64,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               'วิทยาลัยมุ่งมั่นในการเรียนรู้อย่างต่อเนื่อง พัฒนาทักษะวิชาชีพ และนำเทคโนโลยีเข้ามาส่งเสริมสังคมในระดับประเทศและสากล'}
           </p>
           <div className="flex items-center gap-3 pt-2">
-            {settings.social_facebook && (
+            {(settings.social_facebook || settings.facebook_url) && (
               <a
-                href={settings.social_facebook}
+                href={settings.social_facebook || settings.facebook_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 ${theme.primaryHover} hover:text-white transition text-xs font-bold`}
@@ -75,9 +75,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
                 FB
               </a>
             )}
-            {settings.social_line && (
+            {(settings.social_line || settings.line_id) && (
               <a
-                href={settings.social_line}
+                href={settings.social_line || settings.line_id}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition text-xs font-bold"
@@ -86,9 +86,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
                 LN
               </a>
             )}
-            {settings.social_youtube && (
+            {(settings.social_youtube || settings.youtube_url) && (
               <a
-                href={settings.social_youtube}
+                href={settings.social_youtube || settings.youtube_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-rose-600 hover:text-white transition text-xs font-bold"

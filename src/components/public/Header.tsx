@@ -261,9 +261,9 @@ export function Header({
           </div>
 
           <div className="flex items-center gap-3">
-            {settings.social_facebook && (
+            {(settings.social_facebook || settings.facebook_url) && (
               <a
-                href={settings.social_facebook}
+                href={settings.social_facebook || settings.facebook_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white transition"
@@ -274,9 +274,9 @@ export function Header({
                 </svg>
               </a>
             )}
-            {settings.social_youtube && (
+            {(settings.social_youtube || settings.youtube_url) && (
               <a
-                href={settings.social_youtube}
+                href={settings.social_youtube || settings.youtube_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white transition"
@@ -287,9 +287,9 @@ export function Header({
                 </svg>
               </a>
             )}
-            {settings.social_line && (
+            {(settings.social_line || settings.line_id) && (
               <a
-                href={settings.social_line}
+                href={settings.social_line || settings.line_id}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:text-white transition flex items-center gap-1"

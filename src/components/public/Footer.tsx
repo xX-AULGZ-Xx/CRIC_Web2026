@@ -60,9 +60,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
               'วิทยาลัยมุ่งมั่นในการเรียนรู้อย่างต่อเนื่อง พัฒนาทักษะวิชาชีพ และนำเทคโนโลยีเข้ามาส่งเสริมสังคมในระดับประเทศและสากล'}
           </p>
           <div className="flex items-center gap-3">
-            {settings.social_facebook && (
+            {(settings.social_facebook || settings.facebook_url) && (
               <a
-                href={settings.social_facebook}
+                href={settings.social_facebook || settings.facebook_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-orange-600 hover:text-white transition"
@@ -73,9 +73,9 @@ export function Footer({ settings }: { settings: SiteSettings }) {
                 </svg>
               </a>
             )}
-            {settings.social_youtube && (
+            {(settings.social_youtube || settings.youtube_url) && (
               <a
-                href={settings.social_youtube}
+                href={settings.social_youtube || settings.youtube_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-rose-600 hover:text-white transition"
@@ -86,15 +86,28 @@ export function Footer({ settings }: { settings: SiteSettings }) {
                 </svg>
               </a>
             )}
-            {settings.social_line && (
+            {(settings.social_line || settings.line_id) && (
               <a
-                href={settings.social_line}
+                href={settings.social_line || settings.line_id}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-emerald-600 hover:text-white transition"
                 title="LINE"
               >
                 <span className="text-[9px] font-extrabold tracking-tighter">LINE</span>
+              </a>
+            )}
+            {(settings.social_tiktok || settings.tiktok_url) && (
+              <a
+                href={settings.social_tiktok || settings.tiktok_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-pink-600 hover:text-white transition"
+                title="TikTok"
+              >
+                <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 448 512">
+                  <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/>
+                </svg>
               </a>
             )}
             {settings.social_twitter && (

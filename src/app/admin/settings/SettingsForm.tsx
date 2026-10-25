@@ -57,9 +57,14 @@ export function SettingsForm({
     contact_email: '',
     google_map_embed: '',
     facebook_url: '',
+    social_facebook: '',
     youtube_url: '',
+    social_youtube: '',
     line_id: '',
+    social_line: '',
+    social_twitter: '',
     tiktok_url: '',
+    social_tiktok: '',
     popup_enabled: '0',
     popup_image: '',
     popup_link: '',
@@ -276,10 +281,14 @@ export function SettingsForm({
               Facebook Page URL
             </label>
             <input
-              type="text"
-              value={form.facebook_url || ''}
-              onChange={(e) => setVal('facebook_url', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800"
+              type="url"
+              value={form.social_facebook !== undefined && form.social_facebook !== '' ? form.social_facebook : (form.facebook_url || '')}
+              onChange={(e) => {
+                setVal('social_facebook', e.target.value)
+                setVal('facebook_url', e.target.value)
+              }}
+              placeholder="https://facebook.com/yourpage"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-orange-500 transition"
             />
           </div>
           <div>
@@ -287,10 +296,14 @@ export function SettingsForm({
               YouTube Channel URL
             </label>
             <input
-              type="text"
-              value={form.youtube_url || ''}
-              onChange={(e) => setVal('youtube_url', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800"
+              type="url"
+              value={form.social_youtube !== undefined && form.social_youtube !== '' ? form.social_youtube : (form.youtube_url || '')}
+              onChange={(e) => {
+                setVal('social_youtube', e.target.value)
+                setVal('youtube_url', e.target.value)
+              }}
+              placeholder="https://youtube.com/c/yourchannel"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-orange-500 transition"
             />
           </div>
           <div>
@@ -299,9 +312,25 @@ export function SettingsForm({
             </label>
             <input
               type="text"
-              value={form.line_id || ''}
-              onChange={(e) => setVal('line_id', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800"
+              value={form.social_line !== undefined && form.social_line !== '' ? form.social_line : (form.line_id || '')}
+              onChange={(e) => {
+                setVal('social_line', e.target.value)
+                setVal('line_id', e.target.value)
+              }}
+              placeholder="https://line.me/ti/p/@yourid"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-orange-500 transition"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1">
+              Twitter / X URL
+            </label>
+            <input
+              type="url"
+              value={form.social_twitter || ''}
+              onChange={(e) => setVal('social_twitter', e.target.value)}
+              placeholder="https://x.com/yourhandle"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-orange-500 transition"
             />
           </div>
           <div>
@@ -309,10 +338,14 @@ export function SettingsForm({
               TikTok URL
             </label>
             <input
-              type="text"
-              value={form.tiktok_url || ''}
-              onChange={(e) => setVal('tiktok_url', e.target.value)}
-              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800"
+              type="url"
+              value={form.social_tiktok !== undefined && form.social_tiktok !== '' ? form.social_tiktok : (form.tiktok_url || '')}
+              onChange={(e) => {
+                setVal('social_tiktok', e.target.value)
+                setVal('tiktok_url', e.target.value)
+              }}
+              placeholder="https://tiktok.com/@youraccount"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-orange-500 transition"
             />
           </div>
         </div>
