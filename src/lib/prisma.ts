@@ -13,9 +13,16 @@ export function createPrismaClient(customUrl?: string) {
   })
 }
 
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+const activePrisma = globalForPrisma.prisma ?? createPrismaClient()
+globalForPrisma.prisma = activePrisma
 
-globalForPrisma.prisma = prisma
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop) {
+    const client = globalForPrisma.prisma ?? activePrisma
+    const val = (client as any)[prop]
+    return typeof val === 'function' ? val.bind(client) : val
+  },
+})
 
 export function updatePrismaUrl(newUrl: string) {
   process.env.DATABASE_URL = newUrl
