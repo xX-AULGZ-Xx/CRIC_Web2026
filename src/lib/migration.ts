@@ -158,16 +158,36 @@ export async function repairDatabaseIntegrity(): Promise<void> {
       ON DUPLICATE KEY UPDATE name=name;
     `)
 
-    // Ensure download_categories 1 & 2
+    // Ensure download_categories
     await prisma.$executeRawUnsafe(`
       INSERT INTO download_categories (id, name, order_num)
-      VALUES (1, 'แบบฟอร์มทั่วไป', 0)
-      ON DUPLICATE KEY UPDATE name=name;
+      VALUES (2, 'เอกสาร สำหรับครู', 1)
+      ON DUPLICATE KEY UPDATE name='เอกสาร สำหรับครู', order_num=1;
     `)
     await prisma.$executeRawUnsafe(`
       INSERT INTO download_categories (id, name, order_num)
-      VALUES (2, 'เอกสารวิชาการ', 0)
-      ON DUPLICATE KEY UPDATE name=name;
+      VALUES (3, 'ระเบียบ', 2)
+      ON DUPLICATE KEY UPDATE name='ระเบียบ', order_num=2;
+    `)
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO download_categories (id, name, order_num)
+      VALUES (4, 'เอกสาร สำหรับนักเรียน นักศึกษา', 3)
+      ON DUPLICATE KEY UPDATE name='เอกสาร สำหรับนักเรียน นักศึกษา', order_num=3;
+    `)
+
+    // Ensure student document ID 1
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO downloads (id, category_id, title, file_path, file_type, file_size, downloads_count, created_at)
+      VALUES (
+        1, 4,
+        'ระเบียบวิทยาลัยการอาชีพเชียงราย ว่าด้วยเครื่องแบบและการแต่งกายของนักเรียนนักศึกษา พ.ศ. ๒๕๖๙',
+        'uploads/file_6a3a07cea1c513.82403352.pdf',
+        'pdf',
+        1564855,
+        5,
+        '2026-06-17 14:10:27'
+      )
+      ON DUPLICATE KEY UPDATE category_id=4, title=VALUES(title), file_path=VALUES(file_path);
     `)
 
     // Ensure ITA core topics and table links

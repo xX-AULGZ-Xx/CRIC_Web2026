@@ -1,4 +1,5 @@
 import React from 'react';
+import { Download } from 'lucide-react';
 import prisma from '@/lib/prisma';
 import { getSettings, isMaintenanceActive } from '@/lib/settings';
 import { getSession } from '@/lib/auth';
@@ -95,7 +96,7 @@ export default async function DownloadsPage({
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 border border-orange-400/30 text-orange-300 text-xs font-bold mb-3 sm:mb-4 uppercase tracking-wider backdrop-blur-sm">
-            <i className="fa-solid fa-cloud-arrow-down"></i> Document Center
+            <Download className="w-3.5 h-3.5 inline mr-0.5" /> Document Center
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-white tracking-tight mb-3 sm:mb-4">
             ศูนย์ดาวน์โหลดเอกสาร

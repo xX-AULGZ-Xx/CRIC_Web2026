@@ -164,6 +164,11 @@ export default function DownloadsClient({
     return Array.from(map.entries());
   }, [filteredFiles]);
 
+  const activeCategories = useMemo(() => {
+    const catIdSet = new Set(files.map((f) => f.category_id));
+    return categories.filter((c) => catIdSet.has(c.id));
+  }, [categories, files]);
+
   const handleTrackDownload = async (id: number) => {
     setCounts((prev) => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
     try {
@@ -190,7 +195,7 @@ export default function DownloadsClient({
           >
             ทั้งหมด
           </button>
-          {categories.map((cat) => (
+          {activeCategories.map((cat) => (
             <button
               key={cat.id}
               type="button"
