@@ -5,47 +5,76 @@ import {
   runDirectLocalMigration,
   restoreFromZipBuffer,
   restoreFromSqlString,
+  rollbackSnapshot,
   createSafetySnapshot,
   listSafetySnapshots,
 } from '@/lib/migration'
 import fs from 'fs'
 import path from 'path'
 
-export async function GET() {
+export const dynamic = 'force-dynamic'
+
+export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session || session.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { searchParams } = new URL(req.url)
+    const customLegacyPath = searchParams.get('legacyPath') || 'c:\\inetpub\\wwwroot\\cric_new26'
+
     // Get DB tables count
     const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')
     const tablesCount = tablesResult.length
 
-    // Count uploads
+    // Count uploads in web_cric_upgrade
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
     let uploadsCount = 0
     let uploadsSize = 0
 
-    function measureDir(dir: string) {
-      if (!fs.existsSync(/*turbopackIgnore: true*/ dir)) return
-      const entries = fs.readdirSync(/*turbopackIgnore: true*/ dir, { withFileTypes: true })
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name)
-        if (entry.isDirectory()) {
-          measureDir(fullPath)
-        } else {
-          uploadsCount++
-          uploadsSize += fs.statSync(/*turbopackIgnore: true*/ fullPath).size
+    function measureDir(dir: string, cb: (count: number, size: number) => void) {
+      if (!fs.existsSync(dir)) return
+      let c = 0
+      let s = 0
+      function walk(curr: string) {
+        const entries = fs.readdirSync(curr, { withFileTypes: true })
+        for (const entry of entries) {
+          const fullPath = path.join(curr, entry.name)
+          if (entry.isDirectory()) {
+            walk(fullPath)
+          } else {
+            c++
+            try {
+              s += fs.statSync(fullPath).size
+            } catch {}
+          }
         }
       }
+      try {
+        walk(dir)
+      } catch {}
+      cb(c, s)
     }
 
-    measureDir(uploadsDir)
+    measureDir(uploadsDir, (c, s) => {
+      uploadsCount = c
+      uploadsSize = s
+    })
 
-    // Check legacy dir existence
-    const legacyPath = 'c:\\inetpub\\wwwroot\\cric_new26'
-    const legacyExists = fs.existsSync(/*turbopackIgnore: true*/ legacyPath)
+    // Check legacy dir stats
+    let legacyExists = false
+    let legacyUploadsCount = 0
+    let legacyUploadsSize = 0
+
+    if (fs.existsSync(/*turbopackIgnore: true*/ customLegacyPath)) {
+      legacyExists = true
+      const legacyUploads = path.join(customLegacyPath, 'uploads')
+      measureDir(legacyUploads, (c, s) => {
+        legacyUploadsCount = c
+        legacyUploadsSize = s
+      })
+    }
 
     const snapshots = listSafetySnapshots()
 
@@ -54,8 +83,10 @@ export async function GET() {
       tablesCount,
       uploadsCount,
       uploadsSize,
-      legacyPath,
+      legacyPath: customLegacyPath,
       legacyExists,
+      legacyUploadsCount,
+      legacyUploadsSize,
       snapshots,
     })
   } catch (error: any) {
@@ -76,6 +107,7 @@ export async function POST(req: NextRequest) {
       const formData = await req.formData()
       const mode = formData.get('mode') as string
       const file = formData.get('file') as File | null
+      const cleanReset = formData.get('cleanReset') === '1'
 
       if (!file) {
         return NextResponse.json({ error: 'ไม่พบไฟล์ที่อัปโหลด' }, { status: 400 })
@@ -84,13 +116,13 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(await file.arrayBuffer())
 
       if (mode === 'upload-zip' || file.name.endsWith('.zip')) {
-        const result = await restoreFromZipBuffer(buffer)
+        const result = await restoreFromZipBuffer(buffer, cleanReset)
         if (result.success) {
           await logAudit(
             'MIGRATION_ZIP',
             'migration',
             undefined,
-            `Restored from ZIP backup: ${file.name}`
+            `Restored from ZIP backup: ${file.name} (Clean: ${cleanReset})`
           )
         }
         return NextResponse.json(result)
@@ -102,27 +134,53 @@ export async function POST(req: NextRequest) {
             'MIGRATION_SQL',
             'migration',
             undefined,
-            `Restored from SQL backup: ${file.name}`
+            `Restored from SQL dump: ${file.name}`
           )
         }
         return NextResponse.json(result)
       }
 
-      return NextResponse.json({ error: 'รูปแบบไฟล์ไม่ถูกต้อง (รองรับเฉพาะ .zip หรือ .sql)' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'รูปแบบไฟล์ไม่ถูกต้อง (รองรับเฉพาะไฟล์ .zip หรือ .sql)' },
+        { status: 400 }
+      )
     }
 
     // JSON payload
     const body = await req.json()
-    const { action, legacyPath } = body
+    const { action } = body
 
     if (action === 'direct-sync') {
-      const result = await runDirectLocalMigration(legacyPath || 'c:\\inetpub\\wwwroot\\cric_new26')
+      const { legacyPath, policy, syncDatabase, syncUploads } = body
+      const result = await runDirectLocalMigration({
+        legacyPath,
+        policy,
+        syncDatabase,
+        syncUploads,
+      })
       if (result.success) {
         await logAudit(
           'MIGRATION_DIRECT',
           'migration',
           undefined,
-          `Direct sync executed successfully from ${legacyPath || 'cric_new26'}`
+          `Direct sync from ${legacyPath || 'cric_new26'} (${policy || 'merge'})`
+        )
+      }
+      return NextResponse.json(result)
+    }
+
+    if (action === 'rollback') {
+      const { filename } = body
+      if (!filename) {
+        return NextResponse.json({ error: 'กรุณาระบุชื่อไฟล์ Snapshot' }, { status: 400 })
+      }
+      const result = await rollbackSnapshot(filename)
+      if (result.success) {
+        await logAudit(
+          'MIGRATION_ROLLBACK',
+          'migration',
+          undefined,
+          `Rollback executed to ${filename}`
         )
       }
       return NextResponse.json(result)

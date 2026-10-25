@@ -116,7 +116,11 @@ export function MigrationClient({ tables }: { tables: TableInfo[] }) {
     setMigrating(true)
     setMigrateLog(null)
     try {
-      const res = await fetch('/api/admin/migrate', { method: 'POST' })
+      const res = await fetch('/api/admin/migration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'direct-sync' }),
+      })
       const json = await res.json()
       setMigrateLog(JSON.stringify(json, null, 2))
       router.refresh()

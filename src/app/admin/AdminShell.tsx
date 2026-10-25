@@ -28,6 +28,7 @@ import {
   RefreshCw,
   Compass,
   Link2,
+  ArrowRightLeft,
   LogOut,
   Menu,
   X,
@@ -305,6 +306,15 @@ export function AdminShell({
         >
           <Database className="w-5 h-5 mr-3 shrink-0" />
           จัดการฐานข้อมูล
+        </Link>
+
+        <Link
+          href="/admin/migration"
+          onClick={() => setMobileOpen(false)}
+          className={navLinkClass('/admin/migration')}
+        >
+          <ArrowRightLeft className="w-5 h-5 mr-3 shrink-0" />
+          โอนย้ายระบบเดิม
         </Link>
 
         <Link

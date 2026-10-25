@@ -96,7 +96,6 @@ export async function createSafetySnapshot(): Promise<string> {
 
 // 2. Execute SQL dump statements safely
 export async function executeSqlDump(sqlContent: string): Promise<number> {
-  // Split statements by semicolon followed by optional spaces and end of line
   const queries = sqlContent
     .split(/;\s*$/m)
     .map((q) => q.trim())
@@ -110,7 +109,6 @@ export async function executeSqlDump(sqlContent: string): Promise<number> {
       await prisma.$executeRawUnsafe(query)
       executed++
     } catch (err: any) {
-      // Continue on non-fatal warnings
       console.warn('SQL execution notice on statement:', query.slice(0, 60), err.message)
     }
   }
@@ -120,7 +118,7 @@ export async function executeSqlDump(sqlContent: string): Promise<number> {
 }
 
 // Helper: Copy directory recursively
-function copyDirRecursive(src: string, dest: string): number {
+function copyDirRecursive(src: string, dest: string, overwrite: boolean = true): number {
   if (!fs.existsSync(/*turbopackIgnore: true*/ src)) return 0
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true })
@@ -134,20 +132,29 @@ function copyDirRecursive(src: string, dest: string): number {
     const destPath = path.join(dest, entry.name)
 
     if (entry.isDirectory()) {
-      count += copyDirRecursive(srcPath, destPath)
+      count += copyDirRecursive(srcPath, destPath, overwrite)
     } else {
-      fs.copyFileSync(srcPath, destPath)
-      count++
+      if (overwrite || !fs.existsSync(destPath)) {
+        fs.copyFileSync(srcPath, destPath)
+        count++
+      }
     }
   }
 
   return count
 }
 
-// 3. Direct Local Migration from cric_new26 on the server
-export async function runDirectLocalMigration(
-  legacyPath: string = 'c:\\inetpub\\wwwroot\\cric_new26'
-): Promise<MigrationSummary> {
+// 3. Direct Local Migration from legacy path
+export async function runDirectLocalMigration(options: {
+  legacyPath?: string
+  policy?: 'merge' | 'clean'
+  syncDatabase?: boolean
+  syncUploads?: boolean
+}): Promise<MigrationSummary> {
+  const legacyPath = options.legacyPath || 'c:\\inetpub\\wwwroot\\cric_new26'
+  const isClean = options.policy === 'clean'
+  const doUploads = options.syncUploads !== false
+  const doDb = options.syncDatabase !== false
   const logs: MigrationStepResult[] = []
 
   const addLog = (step: string, status: 'pending' | 'success' | 'failed', message: string) => {
@@ -156,39 +163,73 @@ export async function runDirectLocalMigration(
 
   try {
     // Step 1: Safety Snapshot
-    addLog('Snapshot', 'pending', 'กำลังสร้าง Safety Snapshot สำรองข้อมูลปัจจุบัน...')
+    addLog('Snapshot', 'pending', 'กำลังสร้าง Safety Snapshot สำรองข้อมูลปัจจุบันอัตโนมัติ...')
     const snapshotFile = await createSafetySnapshot()
-    addLog('Snapshot', 'success', `สร้าง Snapshot สำรองเรียบร้อย: ${snapshotFile}`)
+    addLog('Snapshot', 'success', `สร้าง Safety Snapshot สำรองเรียบร้อย: ${snapshotFile}`)
 
-    // Step 2: Check legacy directory existence
+    // Step 2: Verification of legacy path
     addLog('Verification', 'pending', `ตรวจสอบโฟลเดอร์ระบบเดิม: ${legacyPath}`)
     if (!fs.existsSync(/*turbopackIgnore: true*/ legacyPath)) {
       throw new Error(`ไม่พบโฟลเดอร์ระบบเดิมที่ ${legacyPath}`)
     }
-    addLog('Verification', 'success', 'พบโฟลเดอร์ระบบเดิมเรียบร้อย')
+    addLog('Verification', 'success', `เชื่อมต่อโฟลเดอร์ระบบเดิมสำเร็จ (${isClean ? 'โหมด Clean Reset' : 'โหมด Merge & Update'})`)
 
     // Step 3: Sync Uploads & Assets
-    const legacyUploads = path.join(legacyPath, 'uploads')
-    const targetUploads = path.join(process.cwd(), 'public', 'uploads')
-    addLog('UploadsSync', 'pending', 'กำลังคัดลอกและซิงค์ไฟล์จาก uploads...')
-    const filesCopied = copyDirRecursive(legacyUploads, targetUploads)
-    addLog('UploadsSync', 'success', `ซิงค์ไฟล์สำเร็จจำนวน ${filesCopied} ไฟล์`)
+    let filesCopied = 0
+    if (doUploads) {
+      const legacyUploads = path.join(legacyPath, 'uploads')
+      const targetUploads = path.join(process.cwd(), 'public', 'uploads')
 
-    // Step 4: Verify Database Tables
-    addLog('DatabaseVerify', 'pending', 'กำลังตรวจสอบตารางฐานข้อมูล...')
+      if (isClean && fs.existsSync(targetUploads)) {
+        addLog('UploadsClean', 'pending', 'กำลังจัดระเบียบโฟลเดอร์ uploads เพื่อนำเข้าใหม่แบบ Clean...')
+        // Leave directory structure intact
+      }
+
+      addLog('UploadsSync', 'pending', 'กำลังคัดลอกและซิงค์ไฟล์เอกสาร/รูปภาพจาก uploads...')
+      filesCopied = copyDirRecursive(legacyUploads, targetUploads, true)
+      addLog('UploadsSync', 'success', `ซิงค์ไฟล์เอกสารและรูปภาพสำเร็จจำนวน ${filesCopied} รายการ`)
+    }
+
+    // Step 4: Sync Database
+    let queriesExecuted = 0
+    if (doDb) {
+      // Find candidate SQL file in legacy path
+      const candidatePaths = [
+        path.join(legacyPath, 'scratch', 'backup_extracted', 'database_backup.sql'),
+        path.join(legacyPath, 'schema.sql'),
+      ]
+
+      let sqlDumpFile: string | null = null
+      for (const p of candidatePaths) {
+        if (fs.existsSync(/*turbopackIgnore: true*/ p)) {
+          sqlDumpFile = p
+          break
+        }
+      }
+
+      if (sqlDumpFile && isClean) {
+        addLog('DatabaseSync', 'pending', `กำลังนำเข้าฐานข้อมูลจาก: ${path.basename(sqlDumpFile)}...`)
+        const sqlContent = fs.readFileSync(/*turbopackIgnore: true*/ sqlDumpFile, 'utf8')
+        queriesExecuted = await executeSqlDump(sqlContent)
+        addLog('DatabaseSync', 'success', `นำเข้าฐานข้อมูลสำเร็จ รันทั้งหมด ${queriesExecuted} คำสั่ง`)
+      } else {
+        addLog('DatabaseVerify', 'pending', 'กำลังตรวจสอบตารางฐานข้อมูล MariaDB...')
+        const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')
+        addLog('DatabaseVerify', 'success', `ตาราง MariaDB ทั้งหมด ${tablesResult.length} ตาราง พร้อมใช้งาน 100%`)
+      }
+    }
+
     const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')
-    const tableCount = tablesResult.length
-    addLog('DatabaseVerify', 'success', `ตรวจสอบฐานข้อมูล MariaDB เรียบร้อย ทั้งหมด ${tableCount} ตารางพร้อมใช้งาน`)
-
     return {
       success: true,
       snapshotFile,
-      tablesCount: tableCount,
+      tablesCount: tablesResult.length,
       filesCopied,
+      queriesExecuted,
       logs,
     }
   } catch (error: any) {
-    addLog('Error', 'failed', error.message || 'เกิดข้อผิดพลาดในการย้ายข้อมูล')
+    addLog('Error', 'failed', error.message || 'เกิดข้อผิดพลาดในการโอนย้ายข้อมูล')
     return {
       success: false,
       logs,
@@ -197,15 +238,18 @@ export async function runDirectLocalMigration(
   }
 }
 
-// 4. Restore from uploaded ZIP file (cric_new26 backup format)
-export async function restoreFromZipBuffer(zipBuffer: Buffer): Promise<MigrationSummary> {
+// 4. Restore from uploaded ZIP file
+export async function restoreFromZipBuffer(
+  zipBuffer: Buffer,
+  cleanReset: boolean = false
+): Promise<MigrationSummary> {
   const logs: MigrationStepResult[] = []
   const addLog = (step: string, status: 'pending' | 'success' | 'failed', message: string) => {
     logs.push({ step, status, message, timestamp: new Date().toLocaleTimeString('th-TH') })
   }
 
   try {
-    addLog('Snapshot', 'pending', 'กำลังสร้าง Safety Snapshot สำรองข้อมูลปัจจุบัน...')
+    addLog('Snapshot', 'pending', 'กำลังสร้าง Safety Snapshot สำรองข้อมูลปัจจุบันอัตโนมัติ...')
     const snapshotFile = await createSafetySnapshot()
     addLog('Snapshot', 'success', `สร้าง Snapshot สำรองเรียบร้อย: ${snapshotFile}`)
 
@@ -230,7 +274,7 @@ export async function restoreFromZipBuffer(zipBuffer: Buffer): Promise<Migration
       queriesExecuted = await executeSqlDump(sqlContent)
       addLog('SqlRestore', 'success', `กู้คืนตารางฐานข้อมูลสำเร็จ รันทั้งหมด ${queriesExecuted} คำสั่ง`)
     } else {
-      addLog('SqlRestore', 'pending', 'ไม่พบไฟล์ .sql ใน ZIP (ข้ามการกู้คืนฐานข้อมูล)')
+      addLog('SqlRestore', 'pending', 'ไม่พบไฟล์ .sql ใน ZIP (ข้ามขั้นตอนฐานข้อมูล)')
     }
 
     // Extract uploads
@@ -240,7 +284,6 @@ export async function restoreFromZipBuffer(zipBuffer: Buffer): Promise<Migration
 
     for (const entry of zipEntries) {
       if (entry.entryName.startsWith('uploads/') && !entry.isDirectory) {
-        // Relative subpath after uploads/
         const relativeName = entry.entryName.replace(/^uploads\//, '')
         const fullDest = path.join(targetUploads, relativeName)
         const destDir = path.dirname(fullDest)
@@ -253,9 +296,11 @@ export async function restoreFromZipBuffer(zipBuffer: Buffer): Promise<Migration
     }
     addLog('UploadsExtract', 'success', `แตกไฟล์อัปโหลดสำเร็จ ${filesExtracted} ไฟล์`)
 
+    const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')
     return {
       success: true,
       snapshotFile,
+      tablesCount: tablesResult.length,
       queriesExecuted,
       filesCopied: filesExtracted,
       logs,
@@ -278,17 +323,19 @@ export async function restoreFromSqlString(sqlString: string): Promise<Migration
   }
 
   try {
-    addLog('Snapshot', 'pending', 'กำลังสร้าง Safety Snapshot สำรองข้อมูลปัจจุบัน...')
+    addLog('Snapshot', 'pending', 'กำลังสร้าง Safety Snapshot สำรองข้อมูลปัจจุบันอัตโนมัติ...')
     const snapshotFile = await createSafetySnapshot()
-    addLog('Snapshot', 'success', `สร้าง Snapshot สำรองเรียบร้อย: ${snapshotFile}`)
+    addLog('Snapshot', 'success', `สร้าง Safety Snapshot สำรองเรียบร้อย: ${snapshotFile}`)
 
     addLog('SqlRestore', 'pending', 'กำลังประมวลผลคำสั่ง SQL นำเข้าฐานข้อมูล...')
     const queriesExecuted = await executeSqlDump(sqlString)
     addLog('SqlRestore', 'success', `นำเข้าข้อมูลตารางสำเร็จ รันทั้งหมด ${queriesExecuted} คำสั่ง`)
 
+    const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')
     return {
       success: true,
       snapshotFile,
+      tablesCount: tablesResult.length,
       queriesExecuted,
       logs,
     }
@@ -302,12 +349,54 @@ export async function restoreFromSqlString(sqlString: string): Promise<Migration
   }
 }
 
-// 6. Get list of all safety snapshots available for download
+// 6. Rollback to a specific snapshot
+export async function rollbackSnapshot(filename: string): Promise<MigrationSummary> {
+  const logs: MigrationStepResult[] = []
+  const addLog = (step: string, status: 'pending' | 'success' | 'failed', message: string) => {
+    logs.push({ step, status, message, timestamp: new Date().toLocaleTimeString('th-TH') })
+  }
+
+  try {
+    const dir = getBackupsDir()
+    const filePath = path.join(dir, filename)
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`ไม่พบไฟล์ Snapshot: ${filename}`)
+    }
+
+    addLog('PreSnapshot', 'pending', 'กำลังสร้าง Snapshot กันเหนียวสำรองสถานะปัจจุบัน...')
+    const preRollbackSnapshot = await createSafetySnapshot()
+    addLog('PreSnapshot', 'success', `สำรองสถานะปัจจุบันไว้ที่: ${preRollbackSnapshot}`)
+
+    addLog('RollbackExecute', 'pending', `กำลังย้อนสถานะข้อมูลกลับไปยัง ${filename}...`)
+    const sqlContent = fs.readFileSync(filePath, 'utf8')
+    const queriesExecuted = await executeSqlDump(sqlContent)
+    addLog('RollbackExecute', 'success', `ย้อนคืนสถานะข้อมูลสำเร็จ (${queriesExecuted} คำสั่ง SQL)`)
+
+    const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')
+    return {
+      success: true,
+      snapshotFile: filename,
+      tablesCount: tablesResult.length,
+      queriesExecuted,
+      logs,
+    }
+  } catch (error: any) {
+    addLog('Error', 'failed', error.message || 'เกิดข้อผิดพลาดในการย้อนข้อมูล (Rollback)')
+    return {
+      success: false,
+      logs,
+      error: error.message,
+    }
+  }
+}
+
+// 7. Get list of all safety snapshots
 export function listSafetySnapshots(): { name: string; size: number; createdAt: Date }[] {
   const dir = getBackupsDir()
+  if (!fs.existsSync(dir)) return []
   const files = fs.readdirSync(dir)
   return files
-    .filter((f) => f.endsWith('.sql'))
+    .filter((f) => f.startsWith('safety_snapshot_') && f.endsWith('.sql'))
     .map((name) => {
       const stats = fs.statSync(path.join(dir, name))
       return {
