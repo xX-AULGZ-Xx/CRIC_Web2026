@@ -114,7 +114,7 @@ export function AdminShell({
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar-dark">
         <Link
           href="/admin"
           onClick={() => setMobileOpen(false)}

@@ -99,3 +99,100 @@ div:where(.swal2-container) button.swal2-styled {
 .text-slate-655 {
   color: #475569 !important;
 }
+
+/* ========================================================================= */
+/* Custom Modern, Smooth & Minimal Scrollbars                                */
+/* ========================================================================= */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+}
+
+/* Global Webkit scrollbar (Chrome, Edge, Safari, Brave, Opera) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-button {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.65);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Dark Background Containers (e.g. Admin Sidebar, Dark Menus, Modals) */
+.custom-scrollbar-dark,
+.dark-scrollbar,
+aside[class*="bg-slate-900"],
+aside[class*="bg-slate-900"] nav,
+aside[class*="bg-slate-900"] div,
+[class*="bg-slate-900"] nav {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent !important;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar,
+.dark-scrollbar::-webkit-scrollbar,
+aside[class*="bg-slate-900"]::-webkit-scrollbar,
+aside[class*="bg-slate-900"] *::-webkit-scrollbar,
+[class*="bg-slate-900"] nav::-webkit-scrollbar {
+  width: 5px !important;
+  height: 5px !important;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-track,
+.dark-scrollbar::-webkit-scrollbar-track,
+aside[class*="bg-slate-900"]::-webkit-scrollbar-track,
+aside[class*="bg-slate-900"] *::-webkit-scrollbar-track,
+[class*="bg-slate-900"] nav::-webkit-scrollbar-track {
+  background: transparent !important;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb,
+.dark-scrollbar::-webkit-scrollbar-thumb,
+aside[class*="bg-slate-900"]::-webkit-scrollbar-thumb,
+aside[class*="bg-slate-900"] *::-webkit-scrollbar-thumb,
+[class*="bg-slate-900"] nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18) !important;
+  border-radius: 9999px !important;
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover,
+.dark-scrollbar::-webkit-scrollbar-thumb:hover,
+aside[class*="bg-slate-900"]::-webkit-scrollbar-thumb:hover,
+aside[class*="bg-slate-900"] *::-webkit-scrollbar-thumb:hover,
+[class*="bg-slate-900"] nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.38) !important;
+}
+
+/* Utility to hide scrollbar while preserving scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
