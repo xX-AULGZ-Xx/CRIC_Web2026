@@ -282,7 +282,7 @@ function compileBlockToHtml(block: BlockItem): string {
       if (data.align === 'right') btnAlign = 'justify-end'
       const targetAttr = data.new_tab == 1 ? 'target="_blank" rel="noopener noreferrer"' : ''
       return `<div class="flex ${btnAlign} my-6">
-  <a href="${data.link}" ${targetAttr} class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md transition text-sm">
+  <a href="${data.link}" ${targetAttr} class="inline-flex items-center gap-2 px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-2xl shadow-md shadow-orange-600/20 transition text-sm">
     <span>${data.label}</span>
     <i data-lucide="arrow-right" class="w-4 h-4"></i>
   </a>

@@ -33,35 +33,32 @@ body {
   background-color: var(--theme-primary-light) !important;
 }
 
-/* Legacy custom colors from CMS database content */
+/* Legacy custom colors from CMS database content mapped to system theme */
 .bg-indigo-650,
 [class*="bg-indigo-650"] {
-  background-color: #4f46e5 !important;
+  background-color: var(--theme-primary, #ea580c) !important;
 }
 
 .text-indigo-650,
 [class*="text-indigo-650"] {
-  color: #4f46e5 !important;
+  color: var(--theme-primary, #ea580c) !important;
 }
 
 .border-indigo-650,
 [class*="border-indigo-650"] {
-  border-color: #4f46e5 !important;
+  border-color: var(--theme-primary, #ea580c) !important;
 }
 
 .hover\:bg-indigo-650:hover,
-[class*="hover:bg-indigo-650"]:hover {
-  background-color: #4338ca !important;
-}
-
+[class*="hover:bg-indigo-650"]:hover,
 .hover\:bg-indigo-700:hover,
 [class*="hover:bg-indigo-700"]:hover {
-  background-color: #4338ca !important;
+  background-color: var(--theme-primary-hover, #c2410c) !important;
 }
 
 .hover\:text-indigo-650:hover,
 [class*="hover:text-indigo-650"]:hover {
-  color: #4338ca !important;
+  color: var(--theme-primary-hover, #c2410c) !important;
 }
 
 .border-slate-350 {

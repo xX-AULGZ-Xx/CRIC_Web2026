@@ -242,11 +242,11 @@ export function normalizeHtmlContent(html: string | null | undefined): string {
     .replace(/href=["']([^"']+\.php(?:\?[^"']*)?)["']/g, (_match, p1) => {
       return `href="${normalizeLinkUrl(p1)}"`;
     })
-    .replace(/\bbg-indigo-650\b/g, 'bg-indigo-600')
-    .replace(/\btext-indigo-650\b/g, 'text-indigo-600')
-    .replace(/\bborder-indigo-650\b/g, 'border-indigo-600')
-    .replace(/\bhover:bg-indigo-650\b/g, 'hover:bg-indigo-700')
-    .replace(/\bhover:text-indigo-650\b/g, 'hover:text-indigo-700')
+    .replace(/\bbg-indigo-(?:600|650)\b/g, 'bg-orange-600')
+    .replace(/\btext-indigo-(?:600|650)\b/g, 'text-orange-600')
+    .replace(/\bborder-indigo-(?:600|650)\b/g, 'border-orange-600')
+    .replace(/\bhover:bg-indigo-(?:650|700)\b/g, 'hover:bg-orange-700')
+    .replace(/\bhover:text-indigo-(?:650|700)\b/g, 'hover:text-orange-700')
     .replace(/<i\b[^>]*\bdata-lucide=["']([^"']+)["'][^>]*><\/i>/gi, (match) => {
       const nameMatch = match.match(/data-lucide=["']([^"']+)["']/i);
       const classMatch = match.match(/class(?:Name)?=["']([^"']+)["']/i);
