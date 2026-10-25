@@ -77,6 +77,46 @@ export async function POST(req: NextRequest) {
             message: `เชื่อมต่อฐานข้อมูล ${name} สำเร็จ (พบ ${tableCount} ตาราง)`,
           })
         } catch (err: any) {
+          // If database does not exist, try to create it automatically
+          if (err.message && err.message.includes('does not exist')) {
+            try {
+              const rootUrl = `mysql://${user}:${pass}@${host}:${port}/mysql?connection_limit=5&connect_timeout=15`
+              const rootClient = new PrismaClient({ datasources: { db: { url: rootUrl } } })
+              await rootClient.$executeRawUnsafe(
+                `CREATE DATABASE IF NOT EXISTS \`${name}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+              )
+              await rootClient.$disconnect()
+
+              // Retry connecting to the newly created database
+              const retryClient = new PrismaClient({ datasources: { db: { url: testUrl } } })
+              const retryResult: any[] = await retryClient.$queryRawUnsafe('SELECT 1 as connected')
+              await retryClient.$disconnect()
+
+              if (saveConfig) {
+                const envPath = path.join(process.cwd(), '.env')
+                let envContent = fs.existsSync(envPath) ? fs.readFileSync(envPath, 'utf8') : ''
+                if (envContent.includes('DATABASE_URL=')) {
+                  envContent = envContent.replace(/DATABASE_URL=.*$/m, `DATABASE_URL="${testUrl}"`)
+                } else {
+                  envContent += `\nDATABASE_URL="${testUrl}"\n`
+                }
+                fs.writeFileSync(envPath, envContent, 'utf8')
+                updatePrismaUrl(testUrl)
+              }
+
+              return NextResponse.json({
+                success: true,
+                connected: Boolean(retryResult[0]?.connected),
+                databaseName: name,
+                existingTablesCount: 0,
+                saved: Boolean(saveConfig),
+                message: `สร้างฐานข้อมูล ${name} อัตโนมัติและเชื่อมต่อสำเร็จเรียบร้อยแล้ว`,
+              })
+            } catch {
+              // Could not auto-create, fallback to original error
+            }
+          }
+
           return NextResponse.json({
             success: false,
             connected: false,
