@@ -577,19 +577,26 @@ export function SetupClient({
                       placeholder="172.17.0.1"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
-                    <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-500">
+                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5 text-[11px] text-slate-500">
                       <span>ค่าที่แนะนำ:</span>
                       <button
                         type="button"
-                        onClick={() => setDbHost('172.17.0.1')}
-                        className="text-indigo-600 hover:underline bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer"
+                        onClick={() => setDbHost('127.0.0.1')}
+                        className="text-indigo-600 hover:underline bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer font-medium"
                       >
-                        172.17.0.1 (Linux Host)
+                        127.0.0.1 (Host Network)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDbHost('172.17.0.1')}
+                        className="text-indigo-600 hover:underline bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer font-medium"
+                      >
+                        172.17.0.1 (Docker Bridge)
                       </button>
                       <button
                         type="button"
                         onClick={() => setDbHost('host.docker.internal')}
-                        className="text-indigo-600 hover:underline bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer"
+                        className="text-indigo-600 hover:underline bg-indigo-50 px-1.5 py-0.5 rounded cursor-pointer font-medium"
                       >
                         host.docker.internal
                       </button>

@@ -1,0 +1,17 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: web_cric_upgrade
+    restart: always
+    network_mode: host
+    environment:
+      - NODE_ENV=production
+      - PORT=3020
+      - DATABASE_URL=mysql://cric_web:%40cricweb26@127.0.0.1:3306/cric_web?connection_limit=10&connect_timeout=30&pool_timeout=30
+      - NEXTAUTH_SECRET=cric-secret-key-super-secure-change-in-prod
+      - NEXTAUTH_URL=http://localhost:3020
+    volumes:
+      - ./public/uploads:/app/public/uploads
+      - ./backups:/app/backups
