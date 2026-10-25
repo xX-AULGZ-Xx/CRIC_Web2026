@@ -16,3 +16,4 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./public/uploads:/app/public/uploads
+      - ./backups:/app/backups

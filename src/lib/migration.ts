@@ -23,8 +23,12 @@ export interface MigrationSummary {
 // Ensure backups directory exists
 export function getBackupsDir(): string {
   const dir = path.join(process.cwd(), 'backups')
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true })
+  try {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true })
+    }
+  } catch (err) {
+    console.warn('Could not create backups directory:', err)
   }
   return dir
 }
@@ -392,18 +396,28 @@ export async function rollbackSnapshot(filename: string): Promise<MigrationSumma
 
 // 7. Get list of all safety snapshots
 export function listSafetySnapshots(): { name: string; size: number; createdAt: Date }[] {
-  const dir = getBackupsDir()
-  if (!fs.existsSync(dir)) return []
-  const files = fs.readdirSync(dir)
-  return files
-    .filter((f) => f.startsWith('safety_snapshot_') && f.endsWith('.sql'))
-    .map((name) => {
-      const stats = fs.statSync(path.join(dir, name))
-      return {
-        name,
-        size: stats.size,
-        createdAt: stats.birthtime,
-      }
-    })
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+  try {
+    const dir = getBackupsDir()
+    if (!fs.existsSync(dir)) return []
+    const files = fs.readdirSync(dir)
+    return files
+      .filter((f) => f.startsWith('safety_snapshot_') && f.endsWith('.sql'))
+      .map((name) => {
+        try {
+          const stats = fs.statSync(path.join(dir, name))
+          return {
+            name,
+            size: stats.size,
+            createdAt: stats.birthtime,
+          }
+        } catch {
+          return null
+        }
+      })
+      .filter((item): item is { name: string; size: number; createdAt: Date } => item !== null)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+  } catch (err) {
+    console.warn('Failed to list safety snapshots:', err)
+    return []
+  }
 }

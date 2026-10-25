@@ -23,11 +23,16 @@ export default async function AdminMigrationPage() {
   const defaultLegacyPath = 'c:\\inetpub\\wwwroot\\cric_new26'
 
   // Safety snapshots
-  const snapshots = listSafetySnapshots().map((s) => ({
-    name: s.name,
-    size: s.size,
-    createdAt: s.createdAt.toISOString(),
-  }))
+  let snapshots: { name: string; size: number; createdAt: string }[] = []
+  try {
+    snapshots = listSafetySnapshots().map((s) => ({
+      name: s.name,
+      size: s.size,
+      createdAt: s.createdAt.toISOString(),
+    }))
+  } catch (err) {
+    console.warn('Could not read snapshots:', err)
+  }
 
   return (
     <MigrationAdminClient
