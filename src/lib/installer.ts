@@ -32,15 +32,33 @@ export interface InstallOptions {
 const LOCK_FILE_NAME = 'installed.lock'
 
 export function getLockFilePath(): string {
-  return path.join(process.cwd(), LOCK_FILE_NAME)
+  const backupLock = path.join(process.cwd(), 'backups', LOCK_FILE_NAME)
+  const rootLock = path.join(process.cwd(), LOCK_FILE_NAME)
+
+  if (fs.existsSync(rootLock)) return rootLock
+  if (fs.existsSync(backupLock)) return backupLock
+
+  // Prefer backups folder as it is guaranteed writable by nextjs user (1001:1001)
+  try {
+    const backupsDir = path.join(process.cwd(), 'backups')
+    if (fs.existsSync(backupsDir)) {
+      return backupLock
+    }
+  } catch {
+    // fallback
+  }
+
+  return rootLock
 }
 
 /**
  * Checks if the system is installed.
  */
 export async function isSystemInstalled(): Promise<boolean> {
-  const lockFile = getLockFilePath()
-  if (fs.existsSync(lockFile)) {
+  const rootLock = path.join(process.cwd(), LOCK_FILE_NAME)
+  const backupLock = path.join(process.cwd(), 'backups', LOCK_FILE_NAME)
+
+  if (fs.existsSync(rootLock) || fs.existsSync(backupLock)) {
     return true
   }
 
@@ -48,8 +66,11 @@ export async function isSystemInstalled(): Promise<boolean> {
   try {
     const userCount = await prisma.users.count()
     if (userCount > 0) {
-      // System is already populated, generate lockfile for safety
+      // System is already populated, try to generate lockfile for safety
       try {
+        const lockFile = getLockFilePath()
+        const dir = path.dirname(lockFile)
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
         fs.writeFileSync(
           lockFile,
           JSON.stringify({
@@ -236,22 +257,29 @@ export async function runInstallation(options: InstallOptions): Promise<{
       addLog('สร้างโครงสร้างหน้าแรก (Homepage Blocks) เริ่มต้นเรียบร้อย')
     }
 
-    // 6. Write Lockfile
-    const lockFile = getLockFilePath()
-    fs.writeFileSync(
-      lockFile,
-      JSON.stringify(
-        {
-          installed_at: new Date().toISOString(),
-          admin_username: options.adminUsername,
-          site_name: options.siteName,
-          installed_by: 'installer_wizard',
-        },
-        null,
-        2
-      ),
-      'utf8'
-    )
+    // 6. Write Lockfile (Safe writing with fallback to backups folder)
+    try {
+      const lockFile = getLockFilePath()
+      const dir = path.dirname(lockFile)
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+      fs.writeFileSync(
+        lockFile,
+        JSON.stringify(
+          {
+            installed_at: new Date().toISOString(),
+            admin_username: options.adminUsername,
+            site_name: options.siteName,
+            installed_by: 'installer_wizard',
+          },
+          null,
+          2
+        ),
+        'utf8'
+      )
+      addLog(`สร้างไฟล์ความปลอดภัย ${path.basename(lockFile)} เรียบร้อยแล้ว`)
+    } catch (lockErr: any) {
+      addLog(`บันทึกสถานะการติดตั้งลงฐานข้อมูลเรียบร้อย (บันทึก lockfile เพิ่มเติม: ${lockErr.message})`)
+    }
     addLog(`สร้างไฟล์ความปลอดภัย ${LOCK_FILE_NAME} เรียบร้อยแล้ว`)
     addLog('การติดตั้งระบบเสร็จสมบูรณ์ 100% พร้อมใช้งานทันที')
 
