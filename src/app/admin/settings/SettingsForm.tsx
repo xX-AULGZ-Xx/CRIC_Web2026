@@ -410,12 +410,21 @@ export function SettingsForm({
             />
             <span>แสดงแถบแจ้งเตือนการใช้คุกกี้ (PDPA Consent Banner)</span>
           </label>
-          <input
-            type="text"
-            value={form.pdpa_text || ''}
-            onChange={(e) => setVal('pdpa_text', e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800"
-          />
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              ข้อความแจ้งเตือนการใช้คุกกี้ (PDPA Consent Message)
+            </label>
+            <textarea
+              rows={2}
+              value={form.pdpa_text || ''}
+              onChange={(e) => setVal('pdpa_text', e.target.value)}
+              placeholder="เว็บไซต์นี้ใช้คุกกี้เพื่อพัฒนาประสบการณ์การใช้งานของท่านตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล (PDPA)"
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm text-slate-800 outline-none focus:bg-white focus:border-indigo-500 transition resize-none"
+            />
+            <p className="text-[11px] text-slate-400 mt-1">
+              แถบนี้จะแสดงผลแบบลอยที่มุมล่างของหน้าเว็บสำหรับผู้เข้าชมเว็บไซต์ จนกว่าผู้ใช้จะกดปุ่มยอมรับหรือปฏิเสธ
+            </p>
+          </div>
         </div>
       </div>
 

@@ -6,6 +6,7 @@ import { Header, NestedNavItem } from '@/components/public/Header'
 import { Footer } from '@/components/public/Footer'
 import { GlobalLightbox } from '@/components/public/GlobalLightbox'
 import { MaintenanceView } from '@/components/public/MaintenanceView'
+import { PDPABanner } from '@/components/public/PDPABanner'
 import { normalizeLinkUrl } from '@/lib/url-helper'
 
 export const dynamic = 'force-dynamic'
@@ -99,6 +100,12 @@ export default async function PublicLayout({
       <main className="flex-1 flex flex-col">{children}</main>
       <Footer settings={settings} />
       <GlobalLightbox />
+      {settings.pdpa_enabled !== '0' && (
+        <PDPABanner
+          enabled={settings.pdpa_enabled !== '0'}
+          text={settings.pdpa_text}
+        />
+      )}
     </div>
   )
 }
