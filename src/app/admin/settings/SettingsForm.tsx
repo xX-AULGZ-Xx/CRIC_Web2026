@@ -44,6 +44,7 @@ export function SettingsForm({
     site_name: '',
     site_description: '',
     site_logo: '',
+    site_favicon: '',
     theme_color: 'indigo',
     show_navbar_icons: '1',
     mourning_ribbon: '0',
@@ -171,12 +172,20 @@ export function SettingsForm({
           </div>
         </div>
 
-        <AdminUploadField
-          label="โลโก้สถานศึกษา (Site Logo)"
-          value={form.site_logo || ''}
-          onChange={(path) => setVal('site_logo', path)}
-          folder="settings"
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AdminUploadField
+            label="โลโก้สถานศึกษา (Site Logo)"
+            value={form.site_logo || ''}
+            onChange={(path) => setVal('site_logo', path)}
+            folder="settings"
+          />
+          <AdminUploadField
+            label="ไอคอนแท็บเบราว์เซอร์ (Favicon - แนะนำขนาด 32x32 หรือ 48x48)"
+            value={form.site_favicon || ''}
+            onChange={(path) => setVal('site_favicon', path)}
+            folder="settings"
+          />
+        </div>
 
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">

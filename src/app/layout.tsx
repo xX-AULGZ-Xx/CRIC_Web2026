@@ -21,6 +21,12 @@ const outfit = Outfit({
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings()
+  const customFavicon = settings.site_favicon
+    ? settings.site_favicon.startsWith('/')
+      ? settings.site_favicon
+      : `/${settings.site_favicon}`
+    : null
+
   return {
     title: {
       default: settings.site_name || 'วิทยาลัยการอาชีพเชียงราย',
@@ -30,11 +36,16 @@ export async function generateMetadata(): Promise<Metadata> {
       settings.site_name_en ||
       'Chiangrai Industrial And Community Education College',
     icons: {
-      icon: settings.site_logo
-        ? settings.site_logo.startsWith('/')
-          ? settings.site_logo
-          : `/${settings.site_logo}`
-        : '/favicon.ico',
+      icon: [
+        ...(customFavicon ? [{ url: customFavicon }] : []),
+        { url: '/favicon.ico', sizes: 'any' },
+        { url: '/icon.png', type: 'image/png', sizes: '32x32' },
+        { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      ],
+      apple: [
+        { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      ],
+      shortcut: customFavicon || '/favicon.ico',
     },
   }
 }

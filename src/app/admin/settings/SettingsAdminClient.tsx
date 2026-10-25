@@ -110,6 +110,28 @@ export function SettingsAdminClient({ initialSettings }: { initialSettings: Reco
                 className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs sm:text-sm focus:border-orange-500 outline-hidden"
               />
             </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">ไอคอนแท็บเบราว์เซอร์ (Favicon Path)</label>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                  <img
+                    src={formData.site_favicon || '/favicon.ico'}
+                    alt="Favicon"
+                    className="w-6 h-6 object-contain"
+                    onError={(e) => {
+                      ;(e.currentTarget as HTMLImageElement).src = '/favicon.ico'
+                    }}
+                  />
+                </div>
+                <input
+                  type="text"
+                  placeholder="ค่าเริ่มต้น: /favicon.ico"
+                  value={formData.site_favicon || ''}
+                  onChange={(e) => handleChange('site_favicon', e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs sm:text-sm focus:border-orange-500 outline-hidden"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
