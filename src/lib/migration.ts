@@ -194,26 +194,26 @@ export async function repairDatabaseIntegrity(): Promise<void> {
     await prisma.$executeRawUnsafe(`
       INSERT INTO ita_main_topics (id, name, order_no, created_at, updated_at, year)
       VALUES (1, 'การเปิดเผยข้อมูลสาธารณะ', 1, NOW(), NOW(), 2569)
-      ON DUPLICATE KEY UPDATE year=2569;
+      ON DUPLICATE KEY UPDATE year=2569, name='การเปิดเผยข้อมูลสาธารณะ';
     `)
     await prisma.$executeRawUnsafe(`
       INSERT INTO ita_sub_topics (id, main_topic_id, code, name, order_no, created_at, updated_at)
       VALUES (1, 1, '9.1', 'ข้อมูลพื้นฐาน', 1, NOW(), NOW())
-      ON DUPLICATE KEY UPDATE main_topic_id=1;
+      ON DUPLICATE KEY UPDATE main_topic_id=1, code='9.1', name='ข้อมูลพื้นฐาน';
     `)
     await prisma.$executeRawUnsafe(`
       INSERT INTO ita_tables (id, sub_topic_id, name, order_no, created_at, updated_at)
       VALUES (1, 1, 'โครงสร้างและการดำเนินงานของหน่วยงาน', 1, NOW(), NOW())
-      ON DUPLICATE KEY UPDATE sub_topic_id=1;
+      ON DUPLICATE KEY UPDATE sub_topic_id=1, name='โครงสร้างและการดำเนินงานของหน่วยงาน';
     `)
     await prisma.$executeRawUnsafe(`
       INSERT INTO ita_items (id, table_id, item_code, info_detail, element_detail, order_no, created_at, updated_at)
       VALUES (
         1, 1, 'O1', 'โครงสร้างหน่วยงาน',
-        '1) แสดงแผนผังโครงสร้างการแบ่งส่วนราชการของสถานศึกษา แสดงตําแหน่งที่สําคัญและการแบ่งส่วนงานภายใน เช่น ฝ่าย งาน แผนกวิชา เป็นต้น',
+        '1) แสดงแผนผังโครงสร้างการแบ่งส่วนราชการของสถานศึกษา แสดงตําแหน่งที่สําคัญและการแบ่งส่วนงานภายใน เช่น ฝ่าย งาน แผนกวิชา เป็นต้น\\r\\n2) แสดงข้อมูลหน้าที่และอํานาจของสถานศึกษาตามที่กฎหมายกําหนด เช่น คําสั่งมอบหมายหน้าที่ของสถานศึกษา ระเบียบสํานักงานคณะกรรมการการอาชีวศึกษา ว่าด้วยการบริหารสถานศึกษา เป็นต้น',
         1, NOW(), NOW()
       )
-      ON DUPLICATE KEY UPDATE table_id=1;
+      ON DUPLICATE KEY UPDATE table_id=1, item_code='O1', info_detail='โครงสร้างหน่วยงาน';
     `)
     await prisma.$executeRawUnsafe('UPDATE ita_sub_topics SET main_topic_id = 1 WHERE main_topic_id IS NULL OR main_topic_id = 0;')
 
