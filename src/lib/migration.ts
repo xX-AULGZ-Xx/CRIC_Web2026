@@ -118,7 +118,62 @@ export async function executeSqlDump(sqlContent: string): Promise<number> {
   }
 
   await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=1;')
+  await repairDatabaseIntegrity()
   return executed
+}
+
+// 2.5 Ensure core relationships and seed records exist to prevent Prisma Inconsistent Query crashes
+export async function repairDatabaseIntegrity(): Promise<void> {
+  try {
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=0;')
+
+    // Ensure user ID 1 (admin)
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO users (id, username, password, email, role, created_at)
+      VALUES (1, 'admin', '$2y$10$rDBst.VoU.pjeNZ2I5qtJulyVLjxmKB5L59I.mpRc1D.3fu6THYr2', 'admin@cric.ac.th', 'admin', NOW())
+      ON DUPLICATE KEY UPDATE username=username;
+    `)
+
+    // Ensure news_categories 1 & 4
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO news_categories (id, name, slug)
+      VALUES (1, 'ข่าววิชาการ', 'academic')
+      ON DUPLICATE KEY UPDATE name=name;
+    `)
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO news_categories (id, name, slug)
+      VALUES (4, 'CRiC', 'cric')
+      ON DUPLICATE KEY UPDATE name=name;
+    `)
+
+    // Ensure personnel_categories 2 & 3
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO personnel_categories (id, name, order_num, parent_id)
+      VALUES (2, 'ผู้บริหารสถานศึกษา', 0, NULL)
+      ON DUPLICATE KEY UPDATE name=name;
+    `)
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO personnel_categories (id, name, order_num, parent_id)
+      VALUES (3, 'ฝ่ายบริหารทรัพยากร', 0, NULL)
+      ON DUPLICATE KEY UPDATE name=name;
+    `)
+
+    // Ensure download_categories 1 & 2
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO download_categories (id, name, order_num)
+      VALUES (1, 'แบบฟอร์มทั่วไป', 0)
+      ON DUPLICATE KEY UPDATE name=name;
+    `)
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO download_categories (id, name, order_num)
+      VALUES (2, 'เอกสารวิชาการ', 0)
+      ON DUPLICATE KEY UPDATE name=name;
+    `)
+
+    await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS=1;')
+  } catch (err) {
+    console.warn('repairDatabaseIntegrity notice:', err)
+  }
 }
 
 // Helper: Copy directory recursively

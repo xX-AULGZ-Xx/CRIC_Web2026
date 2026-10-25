@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/prisma'
 import { getSession, logAudit } from '@/lib/auth'
 import { getSettings } from '@/lib/settings'
+import { repairDatabaseIntegrity } from '@/lib/migration'
 import bcrypt from 'bcryptjs'
 import AdmZip from 'adm-zip'
 import fs from 'fs/promises'
@@ -1900,9 +1901,10 @@ export async function POST(req: NextRequest) {
       }
 
       if (action === 'sync_schema') {
+        await repairDatabaseIntegrity()
         await prisma.$queryRaw`SELECT 1`
         revalidatePath('/', 'layout')
-        await logAudit('MAINTENANCE', 'database', undefined, 'Verified database schema & indexes')
+        await logAudit('MAINTENANCE', 'database', undefined, 'Verified and repaired database schema & integrity')
         return NextResponse.json({ success: true })
       }
     }

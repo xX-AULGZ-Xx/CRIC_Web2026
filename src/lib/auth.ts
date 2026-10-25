@@ -107,6 +107,14 @@ export async function logAudit(
     const session = await getSession()
     if (!session) return
 
+    // Verify user exists to prevent foreign key errors
+    const userExists = await prisma.users.findUnique({
+      where: { id: session.id },
+      select: { id: true },
+    }).catch(() => null)
+
+    if (!userExists) return
+
     await prisma.audit_logs.create({
       data: {
         user_id: session.id,
