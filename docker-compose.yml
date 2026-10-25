@@ -9,7 +9,7 @@ services:
       - "3020:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=mysql://root:%40cvcmedia2022@host.docker.internal:3306/cric_cms?connection_limit=10&connect_timeout=30&pool_timeout=30
+      - DATABASE_URL=${DATABASE_URL:-mysql://cric_web:%40cricweb26@host.docker.internal:3306/cric_web?connection_limit=10&connect_timeout=30&pool_timeout=30}
       - NEXTAUTH_SECRET=cric-secret-key-super-secure-change-in-prod
       - NEXTAUTH_URL=http://localhost:3000
     extra_hosts:

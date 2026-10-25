@@ -444,17 +444,38 @@ export function SetupClient({
                 </div>
               </div>
 
+              {(!data.uploadsWritable || !data.backupsWritable) && (
+                <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-800 space-y-2">
+                  <p className="font-bold flex items-center gap-1.5 text-sm text-red-900">
+                    <FolderX className="w-4 h-4 text-red-600" />
+                    วิธีแก้ไขสิทธิ์โฟลเดอร์บนเซิร์ฟเวอร์ Linux
+                  </p>
+                  <p className="text-slate-600">
+                    รันคำสั่งนี้บน Terminal ของเซิร์ฟเวอร์เพื่อให้คอนเทนเนอร์มีสิทธิ์เขียนไฟล์:
+                  </p>
+                  <div className="p-2.5 bg-slate-900 text-emerald-400 font-mono rounded-xl select-all text-[11px]">
+                    chown -R 1001:1001 public/uploads backups &amp;&amp; chmod -R 775 public/uploads backups
+                  </div>
+                </div>
+              )}
+
               {!data.databaseConnected && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-1">
-                  <p className="font-bold flex items-center gap-1.5">
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-2">
+                  <p className="font-bold flex items-center gap-1.5 text-sm text-amber-900">
                     <AlertTriangle className="w-4 h-4 text-amber-600" />
                     ยังไม่สามารถติดต่อฐานข้อมูลได้
                   </p>
-                  <p>
-                    กรุณาตรวจสอบว่า Service ของ MariaDB/MySQL รันอยู่ และตรวจสอบค่า{' '}
-                    <code>DATABASE_URL</code> ในไฟล์ <code>.env</code> หรือ{' '}
-                    <code>docker-compose.yml</code> ถูกต้อง
+                  <p className="text-slate-700">
+                    หากใช้ MariaDB/MySQL บนเซิร์ฟเวอร์ (เช่น aaPanel) กรุณาตรวจสอบ:
                   </p>
+                  <ul className="list-disc list-inside space-y-1 text-slate-700 pl-1">
+                    <li>
+                      <strong>สิทธิ์การเข้าถึง (Access Permission):</strong> ใน aaPanel ให้แก้ไข Database ตั้งเป็น <code>Everyone (%)</code> หรืออนุญาตจาก IP <code>172.17.0.1</code>
+                    </li>
+                    <li>
+                      <strong>ชื่อฐานข้อมูลและรหัสผ่าน:</strong> ตรวจสอบว่าตรงกับในไฟล์ <code>.env</code> หรือ <code>docker-compose.yml</code> (รหัสผ่านที่มีอักขระพิเศษ <code>@</code> ให้ใช้ <code>%40</code> แทน)
+                    </li>
+                  </ul>
                 </div>
               )}
 
