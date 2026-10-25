@@ -553,7 +553,8 @@ export function PagesAdminClient({
             </span>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop Table Listing (hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-200 text-slate-500 text-xs font-bold uppercase bg-slate-50/20">
@@ -677,6 +678,109 @@ export function PagesAdminClient({
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card Listing (visible on mobile only) */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {initialPages.length === 0 ? (
+              <div className="py-12 px-4 text-center text-slate-400">
+                <Layout className="w-12 h-12 mx-auto mb-3 text-slate-300" />
+                <p className="text-sm font-medium">ยังไม่มีข้อมูลหน้าเว็บในระบบ</p>
+                <button
+                  onClick={openCreate}
+                  className="text-indigo-600 font-semibold hover:underline text-xs mt-1 inline-block cursor-pointer"
+                >
+                  กดปุ่มเขียนหน้าใหม่เพื่อสร้างหน้าแรก
+                </button>
+              </div>
+            ) : (
+              initialPages.map((page) => {
+                const publicUrl = page.slug === 'home' ? '/' : `/${page.slug}`
+                return (
+                  <div
+                    key={page.id}
+                    className="p-4 space-y-3 bg-white hover:bg-slate-50/60 transition"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(page)}
+                          className="font-bold text-slate-900 hover:text-indigo-600 text-base text-left leading-snug line-clamp-2 cursor-pointer"
+                        >
+                          {page.title}
+                        </button>
+                        {page.slug === 'home' && (
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-extrabold rounded-md shadow-xs">
+                            หน้าแรกหลัก (Homepage)
+                          </span>
+                        )}
+                      </div>
+
+                      {page.featured_image ? (
+                        <img
+                          src={normalizeImageUrl(page.featured_image)}
+                          className="w-16 h-12 shrink-0 object-cover rounded-xl border border-slate-200"
+                          alt={page.title}
+                        />
+                      ) : (
+                        <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-100 border border-slate-200/60 flex items-center justify-center text-slate-400">
+                          <Layout className="w-5 h-5 opacity-40" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      <span className="font-mono text-[11px] bg-slate-100 border border-slate-200/60 text-slate-600 px-2 py-0.5 rounded-md truncate max-w-[200px]">
+                        {page.slug === 'home' ? '/' : `about.php?slug=${page.slug}`}
+                      </span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-[11px] text-slate-400">
+                        {page.updated_at
+                          ? new Date(page.updated_at).toLocaleDateString('th-TH', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: '2-digit',
+                            })
+                          : '-'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+                      <Link
+                        href={publicUrl}
+                        target="_blank"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl border border-emerald-200/60 transition"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>ดูหน้าเว็บ</span>
+                      </Link>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(page)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-200/60 transition cursor-pointer"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          <span>แก้ไข</span>
+                        </button>
+                        {page.slug !== 'home' && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(page)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl border border-rose-200/60 transition cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>ลบ</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
           </div>
         </div>
       </div>
