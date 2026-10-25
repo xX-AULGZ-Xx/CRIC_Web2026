@@ -40,10 +40,12 @@ import {
   Loader2,
   Code,
   FileCheck,
+  Copy,
+  Check,
 } from 'lucide-react'
 import { AdminUploadField } from '../AdminMediaPicker'
 import CKEditorField from '../CKEditorField'
-import { swalConfirm, swalWarning, swalError } from '@/lib/sweetalert'
+import { swalConfirm, swalWarning, swalError, swalToast } from '@/lib/sweetalert'
 import { normalizeImageUrl } from '@/lib/url-helper'
 
 export interface StaticPageItem {
@@ -323,6 +325,16 @@ export function PagesAdminClient({
   const [editorMode, setEditorMode] = useState<'blocks' | 'html'>('blocks')
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
+  const [copiedSlug, setCopiedSlug] = useState<string | null>(null)
+
+  const handleCopyUrl = (slug: string) => {
+    const path = slug === 'home' ? '/' : `/${slug}`
+    const fullUrl = typeof window !== 'undefined' ? `${window.location.origin}${path}` : path
+    navigator.clipboard.writeText(fullUrl)
+    setCopiedSlug(slug)
+    swalToast(`คัดลอก ${path} แล้ว`, 'success')
+    setTimeout(() => setCopiedSlug(null), 2000)
+  }
 
   // Current page under edit
   const [pageId, setPageId] = useState<number>(0)
@@ -641,9 +653,34 @@ export function PagesAdminClient({
                           )}
                         </td>
                         <td className="py-4 px-6">
-                          <span className="font-mono text-xs text-slate-500 bg-slate-100 border border-slate-200/60 px-2 py-1 rounded-md">
-                            {page.slug === 'home' ? '/' : `about.php?slug=${page.slug}`}
-                          </span>
+                          <div className="flex items-center gap-1.5 group/url">
+                            <Link
+                              href={publicUrl}
+                              target="_blank"
+                              className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100 hover:text-indigo-900 border border-indigo-200/70 px-2.5 py-1 rounded-lg transition"
+                              title="คลิกเพื่อเปิดดูหน้าเว็บ"
+                            >
+                              <span>{publicUrl}</span>
+                              <ExternalLink className="w-3 h-3 opacity-60" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyUrl(page.slug)}
+                              className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                              title="คัดลอกลิงก์ URL"
+                            >
+                              {copiedSlug === page.slug ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                          {page.slug !== 'home' && (
+                            <div className="text-[10px] text-slate-400 font-mono mt-1">
+                              <span className="text-slate-400">รองรับ:</span> about.php?slug={page.slug}
+                            </div>
+                          )}
                         </td>
                         <td className="py-4 px-6 text-slate-400 text-xs font-medium">
                           {page.updated_at
@@ -731,9 +768,28 @@ export function PagesAdminClient({
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                      <span className="font-mono text-[11px] bg-slate-100 border border-slate-200/60 text-slate-600 px-2 py-0.5 rounded-md truncate max-w-[200px]">
-                        {page.slug === 'home' ? '/' : `about.php?slug=${page.slug}`}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={publicUrl}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/70 px-2 py-0.5 rounded-lg"
+                        >
+                          <span>{publicUrl}</span>
+                          <ExternalLink className="w-3 h-3 opacity-60" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleCopyUrl(page.slug)}
+                          className="p-1 text-slate-400 hover:text-indigo-600 rounded-lg transition cursor-pointer"
+                          title="คัดลอกลิงก์"
+                        >
+                          {copiedSlug === page.slug ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
                       <span className="text-slate-300">•</span>
                       <span className="text-[11px] text-slate-400">
                         {page.updated_at
@@ -1757,8 +1813,9 @@ export function PagesAdminClient({
                 placeholder="เช่น about-college"
                 className="w-full px-4 py-2 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-sm outline-none transition font-mono disabled:opacity-60"
               />
-              <span className="text-[10px] text-slate-400 mt-1 block leading-normal">
-                ลิงก์เว็บหลักจะเป็น: <code className="font-bold">about.php?slug={slug || '...'}</code> (หรือ <code className="font-bold">/{slug || '...'}</code>)
+              <span className="text-[11px] text-slate-500 mt-1 block leading-normal">
+                ลิงก์ของหน้าเว็บ: <code className="font-bold text-indigo-700 font-mono">/{slug || '...'}</code>
+                <span className="text-slate-400 ml-1.5 font-mono text-[10px]">(ระบบรองรับ about.php?slug={slug || '...'} อัตโนมัติ)</span>
               </span>
             </div>
 
