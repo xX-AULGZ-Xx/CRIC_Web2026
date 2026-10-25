@@ -414,7 +414,7 @@ export default async function AdminDashboardPage() {
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <dt className="text-slate-500">แพลตฟอร์ม</dt>
-                <dd className="font-semibold text-slate-800">Next.js 16.4.2 (App Router)</dd>
+                <dd className="font-semibold text-slate-800">Next.js 16.4.3 (App Router)</dd>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-100">
                 <dt className="text-slate-500">ฐานข้อมูล</dt>

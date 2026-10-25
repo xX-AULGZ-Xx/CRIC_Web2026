@@ -73,7 +73,7 @@ export default function AdminUpdatePage() {
               CMS v2.6.0 (Next.js 16)
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              ขับเคลื่อนด้วย Next.js 16.4.2 App Router, React 19.3, Tailwind CSS 4 และ Prisma MariaDB
+              ขับเคลื่อนด้วย Next.js 16.4.3 App Router, React 19.3, Tailwind CSS 4 และ Prisma MariaDB
             </p>
           </div>
 
