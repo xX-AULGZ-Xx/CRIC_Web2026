@@ -66,7 +66,7 @@ export function SetupClient({
   const [dbPort, setDbPort] = useState('3306')
   const [dbUser, setDbUser] = useState('cric_web')
   const [dbPass, setDbPass] = useState('@cricweb26')
-  const [dbName, setDbName] = useState('cric_web')
+  const [dbName, setDbName] = useState('cric_cms')
 
   // Refresh status
   const refreshStatus = async () => {
@@ -652,7 +652,7 @@ export function SetupClient({
                       type="text"
                       value={dbName}
                       onChange={(e) => setDbName(e.target.value)}
-                      placeholder="cric_web"
+                      placeholder="cric_cms"
                       className="w-full px-3 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     />
                   </div>
