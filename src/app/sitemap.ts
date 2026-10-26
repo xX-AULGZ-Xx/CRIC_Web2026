@@ -2,8 +2,18 @@ import type { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 import { getSettings } from '@/lib/settings'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 3600
+export const revalidate = 86400
+
+function toW3CDate(d: Date | string | null | undefined, fallback: Date): string {
+  if (!d) return fallback.toISOString().split('T')[0]
+  try {
+    const dateObj = typeof d === 'string' ? new Date(d) : d
+    if (isNaN(dateObj.getTime())) return fallback.toISOString().split('T')[0]
+    return dateObj.toISOString().split('T')[0]
+  } catch {
+    return fallback.toISOString().split('T')[0]
+  }
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await getSettings()
@@ -31,72 +41,73 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const now = new Date()
+  const todayStr = toW3CDate(now, now)
 
   // 1. Static Core Pages
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'daily',
       priority: 1.0,
     },
     {
       url: `${baseUrl}/about`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/executives`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/personnel`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/curriculum`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'weekly',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/news`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
       url: `${baseUrl}/gallery`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/downloads`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/ita`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
       url: `${baseUrl}/complaints`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
       url: `${baseUrl}/sitemap`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'weekly',
       priority: 0.7,
     },
@@ -130,28 +141,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     const newsUrls: MetadataRoute.Sitemap = news.map((item) => ({
       url: `${baseUrl}/news/${item.id}`,
-      lastModified: item.updated_at || item.created_at || now,
+      lastModified: toW3CDate(item.updated_at || item.created_at, now),
       changeFrequency: 'weekly',
       priority: 0.7,
     }))
 
     const pageUrls: MetadataRoute.Sitemap = staticPages.map((page) => ({
       url: `${baseUrl}/${encodeURIComponent(page.slug)}`,
-      lastModified: page.updated_at || now,
+      lastModified: toW3CDate(page.updated_at, now),
       changeFrequency: 'monthly',
       priority: 0.8,
     }))
 
     const curriculumUrls: MetadataRoute.Sitemap = curriculums.map((c) => ({
       url: `${baseUrl}/curriculum/${c.id}`,
-      lastModified: c.created_at || now,
+      lastModified: toW3CDate(c.created_at, now),
       changeFrequency: 'monthly',
       priority: 0.8,
     }))
 
     const galleryUrls: MetadataRoute.Sitemap = galleries.map((g) => ({
       url: `${baseUrl}/gallery/${g.id}`,
-      lastModified: g.created_at || now,
+      lastModified: toW3CDate(g.created_at, now),
       changeFrequency: 'monthly',
       priority: 0.6,
     }))
@@ -160,7 +171,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: d.parent_id
         ? `${baseUrl}/personnel/sub-dept/${d.id}`
         : `${baseUrl}/personnel/dept/${d.id}`,
-      lastModified: now,
+      lastModified: todayStr,
       changeFrequency: 'monthly',
       priority: 0.6,
     }))
