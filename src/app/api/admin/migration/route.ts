@@ -23,7 +23,11 @@ export async function GET(req: NextRequest) {
     }
 
     const { searchParams } = new URL(req.url)
-    const customLegacyPath = searchParams.get('legacyPath') || 'c:\\inetpub\\wwwroot\\cric_new26'
+    const defaultLegacy =
+      process.platform === 'win32'
+        ? 'c:\\inetpub\\wwwroot\\cric_new26'
+        : '/www/wwwroot/cric_new26'
+    const customLegacyPath = searchParams.get('legacyPath') || defaultLegacy
 
     // Get DB tables count
     const tablesResult: any[] = await prisma.$queryRawUnsafe('SHOW TABLES')

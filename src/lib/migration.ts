@@ -427,8 +427,37 @@ export async function restoreFromZipBuffer(
     const targetUploads = path.join(process.cwd(), 'public', 'uploads')
 
     for (const entry of zipEntries) {
-      if (entry.entryName.startsWith('uploads/') && !entry.isDirectory) {
-        const relativeName = entry.entryName.replace(/^uploads\//, '')
+      if (entry.isDirectory) continue
+
+      const rawName = entry.entryName.replace(/\\/g, '/')
+      let relativeName: string | null = null
+
+      if (rawName.startsWith('uploads/')) {
+        relativeName = rawName.replace(/^uploads\//, '')
+      } else if (rawName.startsWith('public/uploads/')) {
+        relativeName = rawName.replace(/^public\/uploads\//, '')
+      } else if (rawName.includes('/uploads/')) {
+        relativeName = rawName.split('/uploads/')[1]
+      } else if (
+        !rawName.endsWith('.sql') &&
+        !rawName.endsWith('.json') &&
+        (rawName.startsWith('ita/') ||
+          rawName.startsWith('galleries/') ||
+          rawName.startsWith('news/') ||
+          rawName.startsWith('sliders/') ||
+          rawName.startsWith('personnel/') ||
+          rawName.startsWith('curriculum/') ||
+          rawName.startsWith('downloads/') ||
+          rawName.startsWith('complaints/') ||
+          rawName.startsWith('file_') ||
+          rawName.startsWith('fb_cover_') ||
+          rawName.startsWith('ita_') ||
+          /\.(webp|jpg|jpeg|png|gif|svg|pdf|docx?|xlsx?|pptx?|zip|rar)$/i.test(rawName))
+      ) {
+        relativeName = rawName
+      }
+
+      if (relativeName) {
         const fullDest = path.join(targetUploads, relativeName)
         const destDir = path.dirname(fullDest)
         if (!fs.existsSync(destDir)) {

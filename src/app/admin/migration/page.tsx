@@ -20,7 +20,10 @@ export default async function AdminMigrationPage() {
     tablesCount = tablesResult.length
   } catch {}
 
-  const defaultLegacyPath = 'c:\\inetpub\\wwwroot\\cric_new26'
+  const defaultLegacyPath =
+    process.platform === 'win32'
+      ? 'c:\\inetpub\\wwwroot\\cric_new26'
+      : '/www/wwwroot/cric_new26'
 
   // Safety snapshots
   let snapshots: { name: string; size: number; createdAt: string }[] = []
