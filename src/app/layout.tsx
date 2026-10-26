@@ -1,7 +1,13 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Sarabun, Outfit } from 'next/font/google'
 import './globals.css'
 import { getSettings } from '@/lib/settings'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
 
 const sarabun = Sarabun({
   weight: ['400', '700'],

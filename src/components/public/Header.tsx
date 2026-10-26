@@ -347,11 +347,11 @@ export function Header({
                 <GraduationCap className="w-6 h-6" />
               </div>
             )}
-            <div className="flex flex-col justify-center max-w-[200px] sm:max-w-[320px] md:max-w-md my-auto">
-              <h1 className="font-extrabold text-slate-900 text-sm sm:text-base md:text-lg leading-none tracking-tight truncate">
+            <div className="flex flex-col justify-center max-w-[150px] min-[360px]:max-w-[190px] sm:max-w-[320px] md:max-w-md my-auto min-w-0">
+              <h1 className="font-extrabold text-slate-900 text-xs sm:text-base md:text-lg leading-none tracking-tight truncate">
                 {settings.site_name || 'วิทยาลัยการอาชีพเชียงราย'}
               </h1>
-              <span className="text-[8px] sm:text-[9px] text-slate-500 font-semibold uppercase tracking-wide block leading-normal mt-1 whitespace-pre-line">
+              <span className="text-[8px] sm:text-[9px] text-slate-500 font-semibold uppercase tracking-wide block leading-tight mt-0.5 truncate">
                 {settings.site_name_en || 'College Web CMS System'}
               </span>
             </div>

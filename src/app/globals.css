@@ -9,8 +9,17 @@
   --theme-nav-bg: #7c2d12;
 }
 
+html {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   font-family: var(--font-sans);
+  overflow-x: hidden;
+  max-width: 100%;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .text-theme {

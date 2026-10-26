@@ -265,7 +265,7 @@ export default function ItaAccordionClient({
       </section>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
         {/* Year Selector & Badges Section */}
         <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs">
           <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6">
@@ -422,11 +422,11 @@ export default function ItaAccordionClient({
             filteredMainTopics.map((main) => (
               <div key={main.id} className="space-y-6 sm:space-y-8">
                 {/* Main Topic Header */}
-                <div className="text-center space-y-2 pt-2">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+                <div className="text-center space-y-2 pt-2 px-2">
+                  <h2 className="text-lg sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug break-words">
                     {main.name || main.title}
                   </h2>
-                  <div className="w-20 sm:w-24 h-1 bg-gradient-to-r from-orange-500 to-amber-500 mx-auto rounded-full"></div>
+                  <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-orange-500 to-amber-500 mx-auto rounded-full"></div>
                 </div>
 
                 {main.sub_topics.map((sub) => {
@@ -437,19 +437,19 @@ export default function ItaAccordionClient({
                   return (
                     <div
                       key={sub.id}
-                      className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden transition-all"
+                      className="bg-white border border-slate-200 rounded-2xl sm:rounded-3xl shadow-xs overflow-hidden transition-all w-full max-w-full"
                     >
                       {/* Sub Topic Header (Click to collapse/expand) */}
                       <button
                         type="button"
                         onClick={() => toggleSub(sub.id)}
-                        className="w-full px-4 sm:px-6 py-3.5 sm:py-4 bg-slate-50/70 hover:bg-slate-100/70 border-b border-slate-200/80 flex items-center justify-between gap-3 text-left transition cursor-pointer"
+                        className="w-full px-3 sm:px-6 py-3.5 sm:py-4 bg-slate-50/70 hover:bg-slate-100/70 border-b border-slate-200/80 flex items-center justify-between gap-2.5 sm:gap-3 text-left transition cursor-pointer overflow-hidden"
                       >
-                        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                          <span className="px-2.5 py-1 bg-orange-600 text-white rounded-xl text-xs sm:text-sm font-extrabold shrink-0 shadow-xs">
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <span className="px-2.5 py-1 bg-orange-600 text-white rounded-xl text-xs sm:text-sm font-extrabold shrink-0 shadow-xs whitespace-nowrap">
                             ตัวชี้วัด {sub.code}
                           </span>
-                          <h3 className="font-bold text-slate-800 text-xs sm:text-base leading-snug truncate">
+                          <h3 className="font-bold text-slate-800 text-xs sm:text-base leading-snug break-words flex-1">
                             {subTitle}
                           </h3>
                         </div>
