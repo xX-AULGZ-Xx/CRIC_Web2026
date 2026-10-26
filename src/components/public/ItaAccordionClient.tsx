@@ -265,12 +265,12 @@ export default function ItaAccordionClient({
       </section>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
         {/* Year Selector & Badges Section */}
-        <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xs">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0 shadow-xs">
+        <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 shadow-xs">
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0 shadow-xs">
                 <Calendar className="w-5 h-5" />
               </div>
               <div className="min-w-0">
@@ -305,7 +305,7 @@ export default function ItaAccordionClient({
           </div>
 
           {/* Search Box & Quick Controls */}
-          <div className="mt-5 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
@@ -313,7 +313,7 @@ export default function ItaAccordionClient({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="ค้นหาข้อ เช่น O1, โครงสร้าง, งบประมาณ..."
-                className="w-full pl-9 pr-9 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none transition"
+                className="w-full pl-9 pr-9 py-2 sm:py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none transition"
               />
               {searchQuery && (
                 <button
@@ -330,14 +330,14 @@ export default function ItaAccordionClient({
               <button
                 type="button"
                 onClick={expandAll}
-                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
+                className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
               >
                 ขยายทั้งหมด
               </button>
               <button
                 type="button"
                 onClick={collapseAll}
-                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
+                className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
               >
                 ยุบทั้งหมด
               </button>
@@ -346,7 +346,7 @@ export default function ItaAccordionClient({
 
           {/* Quick Sub-Topic Chips (Horizontal Scroll on Mobile/Desktop) */}
           {allSubTopics.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               <button
                 type="button"
                 onClick={() => setActiveSubCode('all')}
