@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Newspaper,
@@ -25,10 +25,16 @@ import {
   Star,
   CheckSquare,
   Square,
+  ArrowLeft,
+  ArrowRight,
+  Link as LinkIcon,
+  Maximize2,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import CKEditorField from '../CKEditorField'
 import { normalizeImageUrl } from '@/lib/url-helper'
-import { swalConfirm, swalSuccess, swalError, swalWarning } from '@/lib/sweetalert'
+import { AppSwal, swalConfirm, swalSuccess, swalError, swalWarning } from '@/lib/sweetalert'
 
 const FacebookIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -86,6 +92,13 @@ export function NewsAdminClient({
   const [saving, setSaving] = useState(false)
   const [uploadingMulti, setUploadingMulti] = useState(false)
   const [rotating, setRotating] = useState(false)
+
+  // Additional Images enhanced state
+  const [isDraggingOver, setIsDraggingOver] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<{ total: number; current: number } | null>(null)
+  const [selectedAddIndices, setSelectedAddIndices] = useState<number[]>([])
+  const [previewModalImg, setPreviewModalImg] = useState<{ src: string; index: number } | null>(null)
+  const [rotatingIndex, setRotatingIndex] = useState<number | null>(null)
 
   // Facebook Import State
   const [fbOpen, setFbOpen] = useState(false)
@@ -168,6 +181,10 @@ export function NewsAdminClient({
     setFbSelectedImages([])
     setFbCoverImage('')
     setFbUrl('')
+    setSelectedAddIndices([])
+    setPreviewModalImg(null)
+    setRotatingIndex(null)
+    setIsDraggingOver(false)
     setModalOpen(true)
   }
 
@@ -205,6 +222,10 @@ export function NewsAdminClient({
     setFbSelectedImages([])
     setFbCoverImage('')
     setFbUrl('')
+    setSelectedAddIndices([])
+    setPreviewModalImg(null)
+    setRotatingIndex(null)
+    setIsDraggingOver(false)
     setModalOpen(true)
   }
 
@@ -252,16 +273,21 @@ export function NewsAdminClient({
     }
   }
 
-  // Multi Image Upload
-  const handleMultiImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (!files || files.length === 0) return
+  // Multi Image Upload & Batch Handling
+  const uploadFilesBatch = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter((f) => f.type.startsWith('image/'))
+    if (fileArray.length === 0) {
+      swalWarning('ไม่มีไฟล์รูปภาพ', 'กรุณาเลือกไฟล์ที่เป็นรูปภาพ (JPG, PNG, WEBP, GIF)')
+      return
+    }
+
     setUploadingMulti(true)
+    setUploadProgress({ total: fileArray.length, current: 0 })
     try {
       const fd = new FormData()
       fd.append('folder', 'news')
-      for (let i = 0; i < files.length; i++) {
-        fd.append('files', files[i])
+      for (let i = 0; i < fileArray.length; i++) {
+        fd.append('files', fileArray[i])
       }
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
       const json = await res.json()
@@ -271,13 +297,253 @@ export function NewsAdminClient({
         ...prev,
         additional_images: [...prev.additional_images, ...newPaths],
       }))
+      swalSuccess('อัปโหลดสำเร็จ', `เพิ่มรูปภาพกิจกรรมเรียบร้อยแล้ว ${newPaths.length} รูป`)
     } catch (err: any) {
-      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message)
+      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message || '')
     } finally {
       setUploadingMulti(false)
-      e.target.value = ''
+      setUploadProgress(null)
     }
   }
+
+  const handleMultiImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadFilesBatch(e.target.files)
+    }
+    e.target.value = ''
+  }
+
+  const handleDropAdditional = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      uploadFilesBatch(e.dataTransfer.files)
+    }
+  }
+
+  const handleDragOverAdditional = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!isDraggingOver) setIsDraggingOver(true)
+  }
+
+  const handleDragLeaveAdditional = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingOver(false)
+  }
+
+  // Rotate an individual additional image
+  const handleRotateAdditional = async (index: number) => {
+    const targetImgPath = form.additional_images[index]
+    if (!targetImgPath) return
+    setRotatingIndex(index)
+    try {
+      const imgUrl = normalizeImageUrl(targetImgPath)
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = imgUrl
+      })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = img.height
+      canvas.height = img.width
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('Cannot get canvas context')
+
+      ctx.translate(canvas.width / 2, canvas.height / 2)
+      ctx.rotate((90 * Math.PI) / 180)
+      ctx.drawImage(img, -img.width / 2, -img.height / 2)
+
+      const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (b) => (b ? resolve(b) : reject(new Error('Blob creation failed'))),
+          'image/jpeg',
+          0.92
+        )
+      })
+
+      const fd = new FormData()
+      fd.append('folder', 'news')
+      fd.append('file', blob, `rotated_${Date.now()}.jpg`)
+
+      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Rotate upload failed')
+
+      const newPath = json.path || json.url
+      setForm((prev) => {
+        const updated = [...prev.additional_images]
+        updated[index] = newPath
+        const newCover = prev.cover_image === targetImgPath ? newPath : prev.cover_image
+        return { ...prev, additional_images: updated, cover_image: newCover }
+      })
+      if (previewModalImg && previewModalImg.index === index) {
+        setPreviewModalImg({ src: newPath, index })
+      }
+    } catch (err: any) {
+      swalError('ไม่สามารถหมุนภาพได้', err.message || '')
+    } finally {
+      setRotatingIndex(null)
+    }
+  }
+
+  // Move additional image left/right (reorder)
+  const handleMoveAdditional = (index: number, direction: 'left' | 'right') => {
+    const targetIndex = direction === 'left' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= form.additional_images.length) return
+    setForm((prev) => {
+      const updated = [...prev.additional_images]
+      const temp = updated[index]
+      updated[index] = updated[targetIndex]
+      updated[targetIndex] = temp
+      return { ...prev, additional_images: updated }
+    })
+  }
+
+  // Set as Cover
+  const handleSetAsCover = (imgPath: string) => {
+    setForm((prev) => ({
+      ...prev,
+      cover_image: imgPath,
+    }))
+    swalSuccess('ตั้งเป็นภาพหน้าปกสำเร็จ', 'ภาพนี้ถูกตั้งเป็นภาพหน้าปกของข่าวแล้ว')
+  }
+
+  // Insert image tag into CKEditor or content
+  const handleInsertIntoContent = (imgPath: string) => {
+    const cleanUrl = normalizeImageUrl(imgPath)
+    const imgHtml = `<p><img src="${cleanUrl}" alt="" style="max-width:100%; height:auto; border-radius:12px; margin:16px 0;" /></p>`
+
+    if (typeof window !== 'undefined' && window.CKEDITOR) {
+      const instances = Object.values(window.CKEDITOR.instances) as any[]
+      if (instances.length > 0) {
+        instances[0].insertHtml(imgHtml)
+        swalSuccess('แทรกรูปภาพสำเร็จ', 'เพิ่มรูปภาพลงในเนื้อหาข่าวเรียบร้อยแล้ว')
+        return
+      }
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      content: (prev.content || '') + imgHtml,
+    }))
+    swalSuccess('แทรกรูปภาพสำเร็จ', 'เพิ่มรูปภาพลงในเนื้อหาข่าวเรียบร้อยแล้ว')
+  }
+
+  // Delete single additional image
+  const handleDeleteAdditional = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      additional_images: prev.additional_images.filter((_, i) => i !== index),
+    }))
+    setSelectedAddIndices((prev) =>
+      prev.filter((i) => i !== index).map((i) => (i > index ? i - 1 : i))
+    )
+  }
+
+  // Delete selected additional images
+  const handleDeleteSelectedAdditional = async () => {
+    if (selectedAddIndices.length === 0) return
+    const ok = await swalConfirm({
+      title: `ลบรูปภาพที่เลือก ${selectedAddIndices.length} รูป?`,
+      text: 'ต้องการลบภาพกิจกรรมที่เลือกออกจากข่าวนี้ใช่หรือไม่?',
+      confirmButtonText: 'ลบรูปที่เลือก',
+    })
+    if (!ok) return
+    const indicesSet = new Set(selectedAddIndices)
+    setForm((prev) => ({
+      ...prev,
+      additional_images: prev.additional_images.filter((_, i) => !indicesSet.has(i)),
+    }))
+    setSelectedAddIndices([])
+  }
+
+  // Toggle select all
+  const handleToggleSelectAllAdditional = () => {
+    if (selectedAddIndices.length === form.additional_images.length) {
+      setSelectedAddIndices([])
+    } else {
+      setSelectedAddIndices(form.additional_images.map((_, i) => i))
+    }
+  }
+
+  // Add from URL or Path prompt
+  const handleAddImageUrlPrompt = async () => {
+    const result = await AppSwal.fire({
+      title: 'เพิ่มรูปภาพจาก URL หรือ Path',
+      input: 'text',
+      inputLabel: 'ระบุ URL หรือที่อยู่ไฟล์รูปภาพ (เช่น uploads/... หรือ https://...)',
+      inputPlaceholder: 'https://... หรือ uploads/news/...',
+      showCancelButton: true,
+      confirmButtonText: 'เพิ่มรูปภาพ',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#ea580c',
+    })
+    if (result.isConfirmed && result.value && result.value.trim()) {
+      setForm((prev) => ({
+        ...prev,
+        additional_images: [...prev.additional_images, result.value.trim()],
+      }))
+      swalSuccess('เพิ่มรูปภาพแล้ว', 'เพิ่มรูปภาพเข้าไปในภาพกิจกรรมเพิ่มเติมเรียบร้อย')
+    }
+  }
+
+  // Listen for Clipboard Paste (Ctrl+V) when modal is open
+  useEffect(() => {
+    if (!modalOpen) return
+    const handlePaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement
+      if (
+        target?.tagName === 'INPUT' ||
+        target?.tagName === 'TEXTAREA' ||
+        target?.isContentEditable
+      ) {
+        return
+      }
+      const items = e.clipboardData?.items
+      if (!items) return
+      const imageFiles: File[] = []
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile()
+          if (file) imageFiles.push(file)
+        }
+      }
+      if (imageFiles.length > 0) {
+        e.preventDefault()
+        uploadFilesBatch(imageFiles)
+      }
+    }
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
+  }, [modalOpen])
+
+  // Listen for Lightbox modal keyboard navigation
+  useEffect(() => {
+    if (!previewModalImg) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPreviewModalImg(null)
+      } else if (e.key === 'ArrowLeft') {
+        if (previewModalImg.index > 0) {
+          const prevIdx = previewModalImg.index - 1
+          setPreviewModalImg({ src: form.additional_images[prevIdx], index: prevIdx })
+        }
+      } else if (e.key === 'ArrowRight') {
+        if (previewModalImg.index < form.additional_images.length - 1) {
+          const nextIdx = previewModalImg.index + 1
+          setPreviewModalImg({ src: form.additional_images[nextIdx], index: nextIdx })
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [previewModalImg, form.additional_images])
 
   // Cover Image Rotation (Canvas 90 degrees)
   const handleRotateCover = async () => {
@@ -1179,50 +1445,92 @@ export function NewsAdminClient({
 
                   {/* ADDITIONAL IMAGES (Activity Photos Gallery - moved below CKEditor for full width) */}
                   {!form.gallery_id ? (
-                    <div className="bg-slate-50/80 p-5 rounded-2xl border border-slate-200 shadow-xs space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/80 pb-3">
+                    <div className="bg-slate-50/90 p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+                      {/* Section Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200/80 pb-4">
                         <div>
                           <div className="flex items-center gap-2">
-                            <ImageIcon className="w-5 h-5 text-indigo-600" />
-                            <h4 className="font-bold text-slate-800 text-sm">
-                              ภาพกิจกรรมเพิ่มเติม
+                            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-xs">
+                              <ImageIcon className="w-4 h-4" />
+                            </div>
+                            <h4 className="font-extrabold text-slate-800 text-base">
+                              ภาพกิจกรรมเพิ่มเติม (Activity Gallery)
                             </h4>
-                            <span className="px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold">
+                            <span className="px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
                               {form.additional_images.length} รูป
                             </span>
                           </div>
                           <p className="text-xs text-slate-500 mt-1">
-                            แสดงเป็นแกลเลอรีภาพท้ายข่าว สามารถเลือกอัปโหลดพร้อมกันได้หลายรูป
+                            ลากรูปภาพมาวาง หรือเลือกไฟล์พร้อมกันได้หลายรูป • คลิกดูภาพขยาย ตั้งเป็นหน้าปก หมุนภาพ หรือแทรกลงเนื้อหาได้
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center flex-wrap gap-2">
                           {form.additional_images.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                const ok = await swalConfirm({
-                                  title: 'ยืนยันการลบรูปทั้งหมด?',
-                                  text: 'ต้องการลบภาพกิจกรรมเพิ่มเติมทั้งหมดออกจากข่าวนี้ใช่หรือไม่?',
-                                  confirmButtonText: 'ลบทั้งหมด',
-                                })
-                                if (ok) {
-                                  setForm({ ...form, additional_images: [] })
-                                }
-                              }}
-                              className="px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
-                            >
-                              ลบทั้งหมด
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={handleToggleSelectAllAdditional}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition cursor-pointer shadow-2xs"
+                              >
+                                {selectedAddIndices.length === form.additional_images.length ? (
+                                  <>
+                                    <CheckSquare className="w-3.5 h-3.5 text-orange-600" /> ยกเลิกเลือก
+                                  </>
+                                ) : (
+                                  <>
+                                    <Square className="w-3.5 h-3.5 text-slate-400" /> เลือกทั้งหมด
+                                  </>
+                                )}
+                              </button>
+
+                              {selectedAddIndices.length > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={handleDeleteSelectedAdditional}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition cursor-pointer shadow-2xs"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> ลบที่เลือก ({selectedAddIndices.length})
+                                </button>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const ok = await swalConfirm({
+                                    title: 'ยืนยันการลบรูปทั้งหมด?',
+                                    text: 'ต้องการลบภาพกิจกรรมเพิ่มเติมทั้งหมดออกจากข่าวนี้ใช่หรือไม่?',
+                                    confirmButtonText: 'ลบทั้งหมด',
+                                  })
+                                  if (ok) {
+                                    setForm({ ...form, additional_images: [] })
+                                    setSelectedAddIndices([])
+                                  }
+                                }}
+                                className="px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer"
+                              >
+                                ลบทั้งหมด
+                              </button>
+                            </>
                           )}
-                          <label className="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer gap-1.5">
+
+                          <button
+                            type="button"
+                            onClick={handleAddImageUrlPrompt}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-bold rounded-xl transition cursor-pointer shadow-2xs"
+                            title="ระบุ URL หรือ ที่อยู่ไฟล์รูปภาพ"
+                          >
+                            <LinkIcon className="w-3.5 h-3.5 text-slate-500" /> + URL / พาธ
+                          </button>
+
+                          <label className="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold rounded-xl shadow-xs transition cursor-pointer gap-1.5">
                             {uploadingMulti ? (
                               <>
                                 <Loader2 className="w-4 h-4 animate-spin" /> กำลังอัปโหลด...
                               </>
                             ) : (
                               <>
-                                <Upload className="w-4 h-4" /> + อัปโหลดรูปภาพเพิ่มเติม
+                                <Upload className="w-4 h-4" /> + อัปโหลดรูปภาพ
                               </>
                             )}
                             <input
@@ -1231,48 +1539,225 @@ export function NewsAdminClient({
                               accept="image/*"
                               onChange={handleMultiImageUpload}
                               className="hidden"
+                              disabled={uploadingMulti}
                             />
                           </label>
                         </div>
                       </div>
 
-                      {form.additional_images.length > 0 ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-6 gap-3 max-h-80 overflow-y-auto p-1">
-                          {form.additional_images.map((img, idx) => (
-                            <div
-                              key={idx}
-                              className="relative group aspect-video rounded-xl overflow-hidden border border-slate-200 bg-white shadow-xs hover:border-indigo-300 transition-all"
-                            >
-                              <img
-                                src={normalizeImageUrl(img)}
-                                alt=""
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                              />
-                              <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded bg-black/60 text-[10px] text-white font-mono">
-                                #{idx + 1}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setForm({
-                                    ...form,
-                                    additional_images: form.additional_images.filter(
-                                      (_, i) => i !== idx
-                                    ),
-                                  })
-                                }
-                                className="absolute top-1.5 right-1.5 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow cursor-pointer"
-                                title="ลบรูปนี้"
-                              >
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ))}
+                      {/* Drag & Drop Upload Zone */}
+                      <div
+                        onDrop={handleDropAdditional}
+                        onDragOver={handleDragOverAdditional}
+                        onDragLeave={handleDragLeaveAdditional}
+                        className={`relative rounded-2xl border-2 border-dashed transition-all p-4 text-center cursor-pointer ${
+                          isDraggingOver
+                            ? 'border-orange-500 bg-orange-50/70 scale-[1.01]'
+                            : 'border-slate-200/90 hover:border-orange-300 bg-white/70'
+                        }`}
+                        onClick={() => {
+                          const fileInput = document.getElementById('additional-images-input') as HTMLInputElement
+                          if (fileInput) fileInput.click()
+                        }}
+                      >
+                        <input
+                          id="additional-images-input"
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleMultiImageUpload}
+                          className="hidden"
+                          disabled={uploadingMulti}
+                        />
+                        <div className="flex flex-col items-center justify-center gap-1.5 py-3">
+                          <div className="w-10 h-10 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center border border-orange-100 shadow-2xs">
+                            {uploadingMulti ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <Upload className="w-5 h-5" />
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm font-bold text-slate-700">
+                            {uploadingMulti
+                              ? `กำลังอัปโหลดรูปภาพ (${uploadProgress?.total || ''} รูป)...`
+                              : isDraggingOver
+                              ? 'ปล่อยไฟล์รูปภาพที่นี่เพื่ออัปโหลดทันที'
+                              : 'ลากและวางรูปภาพกิจกรรมที่นี่ หรือคลิกเพื่อเลือกไฟล์ (เลือกได้หลายรูปพร้อมกัน)'}
+                          </p>
+                          <p className="text-[11px] text-slate-400">
+                            รองรับ JPG, PNG, WEBP, GIF • สามารถกด Ctrl+V เพื่อวางรูปภาพจากคลิปบอร์ดได้
+                          </p>
                         </div>
-                      ) : (
-                        <div className="py-8 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400 gap-2 bg-white/50">
-                          <ImageIcon className="w-8 h-8 opacity-40 text-slate-400" />
-                          <span className="text-xs">ยังไม่มีภาพกิจกรรมเพิ่มเติม กดปุ่ม "+ อัปโหลดรูปภาพเพิ่มเติม" เพื่อเพิ่มรูป</span>
+                      </div>
+
+                      {/* Uploaded Images Grid */}
+                      {form.additional_images.length > 0 && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+                            <span>รายการภาพกิจกรรมทั้งหมด ({form.additional_images.length} รูป)</span>
+                            <span className="text-[11px] text-slate-400 hidden sm:inline">
+                              คลิกที่รูปเพื่อดูภาพขนาดเต็ม • ใช้ปุ่มลูกศรเพื่อเลื่อนลำดับ
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 max-h-[460px] overflow-y-auto p-1.5 custom-scrollbar">
+                            {form.additional_images.map((img, idx) => {
+                              const isCover = form.cover_image === img
+                              const isSelected = selectedAddIndices.includes(idx)
+                              const isRotating = rotatingIndex === idx
+
+                              return (
+                                <div
+                                  key={`${img}-${idx}`}
+                                  className={`relative group rounded-2xl overflow-hidden border transition-all bg-white shadow-xs flex flex-col ${
+                                    isCover
+                                      ? 'border-orange-500 ring-2 ring-orange-400/40'
+                                      : isSelected
+                                      ? 'border-indigo-500 ring-2 ring-indigo-400/30'
+                                      : 'border-slate-200 hover:border-slate-300 hover:shadow-md'
+                                  }`}
+                                >
+                                  {/* Image Container with Preview Click */}
+                                  <div
+                                    className="relative aspect-video w-full bg-slate-100 cursor-pointer overflow-hidden"
+                                    onClick={() => setPreviewModalImg({ src: img, index: idx })}
+                                  >
+                                    <img
+                                      src={normalizeImageUrl(img)}
+                                      alt=""
+                                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                                      loading="lazy"
+                                    />
+
+                                    {/* Top-Left Badge: Cover or Index */}
+                                    <div className="absolute top-2 left-2 flex items-center gap-1 z-10 pointer-events-none">
+                                      {isCover ? (
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-gradient-to-r from-orange-600 to-amber-600 text-white text-[10px] font-black shadow">
+                                          <Star className="w-2.5 h-2.5 fill-current" /> หน้าปก
+                                        </span>
+                                      ) : (
+                                        <span className="px-2 py-0.5 rounded-lg bg-black/65 backdrop-blur-xs text-white text-[10px] font-bold font-mono">
+                                          #{idx + 1}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    {/* Top-Right Checkbox */}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        setSelectedAddIndices((prev) =>
+                                          prev.includes(idx)
+                                            ? prev.filter((i) => i !== idx)
+                                            : [...prev, idx]
+                                        )
+                                      }}
+                                      className={`absolute top-2 right-2 p-1 rounded-lg backdrop-blur-xs transition z-10 cursor-pointer ${
+                                        isSelected
+                                          ? 'bg-indigo-600 text-white shadow'
+                                          : 'bg-black/40 text-white/80 hover:bg-black/60'
+                                      }`}
+                                      title={isSelected ? 'ยกเลิกการเลือก' : 'เลือกรูปนี้'}
+                                    >
+                                      {isSelected ? (
+                                        <CheckSquare className="w-3.5 h-3.5" />
+                                      ) : (
+                                        <Square className="w-3.5 h-3.5" />
+                                      )}
+                                    </button>
+
+                                    {/* Loading Spinner if rotating */}
+                                    {isRotating && (
+                                      <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center text-white z-20">
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                      </div>
+                                    )}
+
+                                    {/* Hover Overlay preview hint */}
+                                    <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                      <span className="px-2.5 py-1 rounded-xl bg-black/75 text-white text-[11px] font-bold flex items-center gap-1 shadow-lg">
+                                        <Maximize2 className="w-3 h-3" /> ขยายรูป
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Bottom Action Bar */}
+                                  <div className="p-1.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between gap-1 text-slate-600">
+                                    <div className="flex items-center gap-0.5">
+                                      {/* Set as Cover */}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSetAsCover(img)}
+                                        disabled={isCover}
+                                        className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                          isCover
+                                            ? 'text-orange-600 bg-orange-100/80 cursor-default'
+                                            : 'hover:bg-slate-200 text-slate-500 hover:text-orange-600'
+                                        }`}
+                                        title={isCover ? 'เป็นภาพหน้าปกอยู่แล้ว' : 'ตั้งเป็นภาพหน้าปกของข่าวนี้'}
+                                      >
+                                        <Star className={`w-3.5 h-3.5 ${isCover ? 'fill-current' : ''}`} />
+                                      </button>
+
+                                      {/* Move Left */}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveAdditional(idx, 'left')}
+                                        disabled={idx === 0}
+                                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                                        title="ย้ายไปซ้าย (เลื่อนขึ้น)"
+                                      >
+                                        <ArrowLeft className="w-3.5 h-3.5" />
+                                      </button>
+
+                                      {/* Move Right */}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleMoveAdditional(idx, 'right')}
+                                        disabled={idx === form.additional_images.length - 1}
+                                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                                        title="ย้ายไปขวา (เลื่อนลง)"
+                                      >
+                                        <ArrowRight className="w-3.5 h-3.5" />
+                                      </button>
+
+                                      {/* Rotate 90 deg */}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRotateAdditional(idx)}
+                                        disabled={isRotating}
+                                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-slate-800 transition cursor-pointer"
+                                        title="หมุนรูป 90° ตามเข็มนาฬิกา"
+                                      >
+                                        <RotateCw className="w-3.5 h-3.5" />
+                                      </button>
+
+                                      {/* Insert into Content */}
+                                      <button
+                                        type="button"
+                                        onClick={() => handleInsertIntoContent(img)}
+                                        className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 hover:text-indigo-600 transition cursor-pointer"
+                                        title="แทรกภาพนี้ลงในเนื้อหาข่าว"
+                                      >
+                                        <FileText className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+
+                                    {/* Delete this image */}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeleteAdditional(idx)}
+                                      className="p-1.5 rounded-lg hover:bg-red-100 text-slate-400 hover:text-red-600 transition cursor-pointer"
+                                      title="ลบรูปนี้"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1285,7 +1770,7 @@ export function NewsAdminClient({
                       <button
                         type="button"
                         onClick={() => setForm({ ...form, gallery_id: '' })}
-                        className="text-indigo-600 hover:underline font-semibold cursor-pointer"
+                        className="text-orange-600 hover:underline font-bold cursor-pointer"
                       >
                         ยกเลิกการเชื่อมโยงอัลบั้ม
                       </button>
@@ -1615,6 +2100,124 @@ export function NewsAdminClient({
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox / Preview Modal for Additional Images */}
+      {previewModalImg && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/85 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6"
+          onClick={() => setPreviewModalImg(null)}
+        >
+          {/* Top Header */}
+          <div
+            className="flex items-center justify-between text-white max-w-6xl mx-auto w-full z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-sm bg-white/10 px-3 py-1 rounded-xl">
+                รูปที่ {previewModalImg.index + 1} จาก {form.additional_images.length}
+              </span>
+              {form.cover_image === previewModalImg.src && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-600 text-white text-xs font-bold">
+                  <Star className="w-3 h-3 fill-current" /> เป็นภาพหน้าปก
+                </span>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPreviewModalImg(null)}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Center Image with Prev / Next Buttons */}
+          <div
+            className="relative flex-1 flex items-center justify-center max-w-6xl mx-auto w-full my-4 min-h-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {previewModalImg.index > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const prevIdx = previewModalImg.index - 1
+                  setPreviewModalImg({ src: form.additional_images[prevIdx], index: prevIdx })
+                }}
+                className="absolute left-2 sm:left-4 z-20 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white transition cursor-pointer shadow-lg"
+                title="รูปก่อนหน้า (ลูกศรซ้าย)"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            <img
+              src={normalizeImageUrl(previewModalImg.src)}
+              alt=""
+              className="max-h-[70vh] sm:max-h-[75vh] w-auto max-w-full object-contain rounded-2xl shadow-2xl"
+            />
+
+            {previewModalImg.index < form.additional_images.length - 1 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const nextIdx = previewModalImg.index + 1
+                  setPreviewModalImg({ src: form.additional_images[nextIdx], index: nextIdx })
+                }}
+                className="absolute right-2 sm:right-4 z-20 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white transition cursor-pointer shadow-lg"
+                title="รูปถัดไป (ลูกศรขวา)"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Toolbar */}
+          <div
+            className="flex items-center justify-center gap-2 sm:gap-3 flex-wrap max-w-2xl mx-auto w-full z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => handleSetAsCover(previewModalImg.src)}
+              disabled={form.cover_image === previewModalImg.src}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-50 text-white text-xs font-bold transition shadow cursor-pointer"
+            >
+              <Star className="w-4 h-4" /> ตั้งเป็นรูปหน้าปก
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleInsertIntoContent(previewModalImg.src)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition cursor-pointer"
+            >
+              <FileText className="w-4 h-4" /> แทรกลงเนื้อหาข่าว
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                await handleRotateAdditional(previewModalImg.index)
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white text-xs font-bold transition cursor-pointer"
+            >
+              <RotateCw className="w-4 h-4" /> หมุน 90°
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                const idx = previewModalImg.index
+                handleDeleteAdditional(idx)
+                setPreviewModalImg(null)
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600/80 hover:bg-red-600 text-white text-xs font-bold transition cursor-pointer"
+            >
+              <Trash2 className="w-4 h-4" /> ลบรูปนี้
+            </button>
           </div>
         </div>
       )}
