@@ -2,6 +2,9 @@ import type { MetadataRoute } from 'next'
 import prisma from '@/lib/prisma'
 import { getSettings } from '@/lib/settings'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 3600
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await getSettings()
   const rawBaseUrl =
@@ -14,13 +17,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     !rawBaseUrl ||
     rawBaseUrl.includes('localhost') ||
     rawBaseUrl.includes('127.0.0.1')
-  const baseUrl = (
+  let baseUrl = (
     isLocal
       ? (settings as any)?.site_url ||
         (settings as any)?.website_url ||
-        'https://cric.ac.th'
+        'https://www.cric.ac.th'
       : rawBaseUrl
   ).replace(/\/+$/, '')
+
+  // Ensure canonical www subdomain for cric.ac.th
+  if (baseUrl === 'https://cric.ac.th' || baseUrl === 'http://cric.ac.th') {
+    baseUrl = 'https://www.cric.ac.th'
+  }
 
   const now = new Date()
 

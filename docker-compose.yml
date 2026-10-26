@@ -12,7 +12,7 @@ services:
       - DATABASE_URL=${DATABASE_URL:-mysql://cric_web:%40cricweb26@host.docker.internal:3306/cric_cms?connection_limit=10&connect_timeout=30&pool_timeout=30}
       - NEXTAUTH_SECRET=cric-secret-key-super-secure-change-in-prod
       - NEXTAUTH_URL=http://localhost:3000
-      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://cric.ac.th}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-https://www.cric.ac.th}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:

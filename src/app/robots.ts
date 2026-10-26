@@ -13,13 +13,18 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     !rawBaseUrl ||
     rawBaseUrl.includes('localhost') ||
     rawBaseUrl.includes('127.0.0.1')
-  const baseUrl = (
+  let baseUrl = (
     isLocal
       ? (settings as any)?.site_url ||
         (settings as any)?.website_url ||
-        'https://cric.ac.th'
+        'https://www.cric.ac.th'
       : rawBaseUrl
   ).replace(/\/+$/, '')
+
+  // Ensure canonical www subdomain for cric.ac.th
+  if (baseUrl === 'https://cric.ac.th' || baseUrl === 'http://cric.ac.th') {
+    baseUrl = 'https://www.cric.ac.th'
+  }
 
   return {
     rules: [
