@@ -245,7 +245,7 @@ export default function ItaAccordionClient({
               }}
             />
             {/* Centered Banner Image */}
-            <div className="relative z-10 w-full max-w-[1400px] mx-auto shadow-2xl flex justify-center">
+            <div className="relative z-10 w-full max-w-7xl mx-auto shadow-2xl flex justify-center">
               <img
                 src={normalizeImageUrl(activeCoverBanner)}
                 className="w-full h-auto object-contain block max-h-[220px] sm:max-h-[360px] md:max-h-[440px]"
@@ -265,12 +265,12 @@ export default function ItaAccordionClient({
       </section>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-4 sm:space-y-6 w-full max-w-full overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
         {/* Year Selector & Badges Section */}
-        <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs">
-          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0 shadow-xs">
+        <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-xs">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 sm:gap-6">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0 shadow-xs">
                 <Calendar className="w-5 h-5" />
               </div>
               <div className="min-w-0">
@@ -283,7 +283,7 @@ export default function ItaAccordionClient({
               </div>
             </div>
 
-            <div className="relative w-full md:w-64">
+            <div className="relative w-full md:w-64 shrink-0">
               <select
                 value={selectedYear}
                 onChange={(e) => {
@@ -305,7 +305,7 @@ export default function ItaAccordionClient({
           </div>
 
           {/* Search Box & Quick Controls */}
-          <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="mt-5 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
@@ -313,7 +313,7 @@ export default function ItaAccordionClient({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="ค้นหาข้อ เช่น O1, โครงสร้าง, งบประมาณ..."
-                className="w-full pl-9 pr-9 py-2 bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none transition"
+                className="w-full pl-9 pr-9 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none transition"
               />
               {searchQuery && (
                 <button
@@ -326,31 +326,31 @@ export default function ItaAccordionClient({
               )}
             </div>
 
-            <div className="flex items-center gap-2 justify-end text-xs">
+            <div className="flex items-center gap-2 justify-end text-xs shrink-0">
               <button
                 type="button"
                 onClick={expandAll}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition"
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
               >
                 ขยายทั้งหมด
               </button>
               <button
                 type="button"
                 onClick={collapseAll}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition"
+                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
               >
                 ยุบทั้งหมด
               </button>
             </div>
           </div>
 
-          {/* Quick Sub-Topic Chips (Horizontal Scroll on Mobile) */}
+          {/* Quick Sub-Topic Chips (Horizontal Scroll on Mobile/Desktop) */}
           {allSubTopics.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
               <button
                 type="button"
                 onClick={() => setActiveSubCode('all')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition cursor-pointer ${
                   activeSubCode === 'all'
                     ? 'bg-orange-600 text-white shadow-xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
@@ -358,23 +358,26 @@ export default function ItaAccordionClient({
               >
                 ทั้งหมด
               </button>
-              {allSubTopics.map((sub) => (
-                <button
-                  key={sub.id}
-                  type="button"
-                  onClick={() => setActiveSubCode(sub.code)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition flex items-center gap-1.5 ${
-                    activeSubCode === sub.code
-                      ? 'bg-orange-600 text-white shadow-xs'
-                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  <span>ตัวชี้วัด {sub.code}</span>
-                  <span className="hidden sm:inline font-normal text-[11px] opacity-80">
-                    {sub.name}
-                  </span>
-                </button>
-              ))}
+              {allSubTopics.map((sub) => {
+                const shortName = sub.name.split('(')[0].trim();
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setActiveSubCode(sub.code)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
+                      activeSubCode === sub.code
+                        ? 'bg-orange-600 text-white shadow-xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                    }`}
+                  >
+                    <span>ตัวชี้วัด {sub.code}</span>
+                    <span className="hidden md:inline font-normal text-[11px] opacity-85 max-w-[200px] truncate">
+                      {shortName}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>
@@ -516,66 +519,68 @@ export default function ItaAccordionClient({
                                               />
                                             )}
                                           </td>
-                                          <td className="py-4 px-4 text-center space-y-2 align-top">
+                                          <td className="py-4 px-4 text-center align-top">
                                             {item.links && item.links.length > 0 ? (
-                                              item.links.map((link) => {
-                                                if (link.link_type === 'text') {
-                                                  return (
-                                                    <div
-                                                      key={link.id}
-                                                      className="text-left bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 space-y-1 w-full"
-                                                    >
-                                                      {link.label && (
-                                                        <span className="text-[11px] font-bold text-amber-900 block">
-                                                          {link.label}
-                                                        </span>
-                                                      )}
+                                              <div className="flex flex-col gap-2 max-w-[240px] mx-auto">
+                                                {item.links.map((link) => {
+                                                  if (link.link_type === 'text') {
+                                                    return (
                                                       <div
-                                                        className="text-xs text-slate-700 leading-relaxed font-medium prose prose-sm max-w-none"
-                                                        dangerouslySetInnerHTML={{
-                                                          __html: normalizeHtmlContent(
-                                                            link.url || ''
-                                                          ),
-                                                        }}
-                                                      />
-                                                    </div>
+                                                        key={link.id}
+                                                        className="text-left bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 space-y-1 w-full"
+                                                      >
+                                                        {link.label && (
+                                                          <span className="text-[11px] font-bold text-amber-900 block">
+                                                            {link.label}
+                                                          </span>
+                                                        )}
+                                                        <div
+                                                          className="text-xs text-slate-700 leading-relaxed font-medium prose prose-sm max-w-none"
+                                                          dangerouslySetInnerHTML={{
+                                                            __html: normalizeHtmlContent(
+                                                              link.url || ''
+                                                            ),
+                                                          }}
+                                                        />
+                                                      </div>
+                                                    );
+                                                  }
+
+                                                  const rawUrl = link.url || '';
+                                                  const cleanUrl =
+                                                    link.link_type === 'file'
+                                                      ? normalizeImageUrl(rawUrl)
+                                                      : normalizeLinkUrl(rawUrl);
+                                                  const label =
+                                                    link.label ||
+                                                    (link.link_type === 'file'
+                                                      ? 'ดาวน์โหลดเอกสาร'
+                                                      : 'ลิงก์ข้อมูล');
+                                                  const isFile =
+                                                    link.link_type === 'file';
+
+                                                  return (
+                                                    <a
+                                                      key={link.id}
+                                                      href={cleanUrl}
+                                                      target="_blank"
+                                                      rel="noopener noreferrer"
+                                                      className={`inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-xl text-xs font-bold shadow-xs transition cursor-pointer ${
+                                                        isFile
+                                                          ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                                                          : 'bg-orange-600 hover:bg-orange-700 text-white'
+                                                      }`}
+                                                    >
+                                                      {isFile ? (
+                                                        <FileText className="w-3.5 h-3.5 shrink-0" />
+                                                      ) : (
+                                                        <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+                                                      )}
+                                                      <span className="truncate">{label}</span>
+                                                    </a>
                                                   );
-                                                }
-
-                                                const rawUrl = link.url || '';
-                                                const cleanUrl =
-                                                  link.link_type === 'file'
-                                                    ? normalizeImageUrl(rawUrl)
-                                                    : normalizeLinkUrl(rawUrl);
-                                                const label =
-                                                  link.label ||
-                                                  (link.link_type === 'file'
-                                                    ? 'ดาวน์โหลดเอกสาร'
-                                                    : 'ลิงก์ข้อมูล');
-                                                const isFile =
-                                                  link.link_type === 'file';
-
-                                                return (
-                                                  <a
-                                                    key={link.id}
-                                                    href={cleanUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className={`inline-flex items-center justify-center gap-1.5 w-full px-3 py-2 rounded-xl text-xs font-bold shadow-xs transition cursor-pointer ${
-                                                      isFile
-                                                        ? 'bg-rose-600 hover:bg-rose-700 text-white'
-                                                        : 'bg-orange-600 hover:bg-orange-700 text-white'
-                                                    }`}
-                                                  >
-                                                    {isFile ? (
-                                                      <FileText className="w-3.5 h-3.5 shrink-0" />
-                                                    ) : (
-                                                      <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                                                    )}
-                                                    <span className="truncate">{label}</span>
-                                                  </a>
-                                                );
-                                              })
+                                                })}
+                                              </div>
                                             ) : (
                                               <span className="text-slate-400 italic text-xs">
                                                 -
