@@ -4,10 +4,22 @@ import { getSettings } from '@/lib/settings'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const settings = await getSettings()
-  const baseUrl = (
+  const rawBaseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ||
-    process.env.NEXTAUTH_URL ||
-    'https://cric.ac.th'
+    process.env.SITE_URL ||
+    (settings as any)?.site_url ||
+    (settings as any)?.website_url ||
+    process.env.NEXTAUTH_URL
+  const isLocal =
+    !rawBaseUrl ||
+    rawBaseUrl.includes('localhost') ||
+    rawBaseUrl.includes('127.0.0.1')
+  const baseUrl = (
+    isLocal
+      ? (settings as any)?.site_url ||
+        (settings as any)?.website_url ||
+        'https://cric.ac.th'
+      : rawBaseUrl
   ).replace(/\/+$/, '')
 
   const now = new Date()
