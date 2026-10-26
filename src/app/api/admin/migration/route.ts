@@ -13,6 +13,7 @@ import fs from 'fs'
 import path from 'path'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 300 // 5 minutes timeout for large migration files
 
 export async function GET(req: NextRequest) {
   try {

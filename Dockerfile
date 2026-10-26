@@ -29,6 +29,7 @@ RUN pnpm build
 
 # Runner stage
 FROM node:24-alpine AS runner
+RUN apk add --no-cache mariadb-client
 WORKDIR /app
 
 ENV NODE_ENV=production

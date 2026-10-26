@@ -1,6 +1,8 @@
 import prisma from './prisma'
 import fs from 'fs'
 import path from 'path'
+import os from 'os'
+import { execSync } from 'child_process'
 import AdmZip from 'adm-zip'
 
 export interface MigrationStepResult {
@@ -100,6 +102,42 @@ export async function createSafetySnapshot(): Promise<string> {
 
 // 2. Execute SQL dump statements safely
 export async function executeSqlDump(sqlContent: string): Promise<number> {
+  const dbUrl = process.env.DATABASE_URL
+  if (dbUrl) {
+    try {
+      const url = new URL(dbUrl.replace(/^mysql:\/\//, 'http://'))
+      const host = url.hostname
+      const port = url.port || '3306'
+      const user = url.username
+      const password = decodeURIComponent(url.password)
+      const database = url.pathname.replace(/^\//, '').split('?')[0]
+
+      const tempFile = path.join(os.tmpdir(), `dump_${Date.now()}.sql`)
+      fs.writeFileSync(tempFile, sqlContent, 'utf8')
+
+      let clientCmd = ''
+      try {
+        clientCmd = execSync('which mariadb || which mysql', { stdio: 'pipe' })
+          .toString()
+          .trim()
+      } catch {}
+
+      if (clientCmd) {
+        execSync(
+          `${clientCmd} -h "${host}" -P "${port}" -u "${user}" --password="${password}" "${database}" < "${tempFile}"`,
+          { stdio: 'pipe', timeout: 180000 }
+        )
+        try { fs.unlinkSync(tempFile) } catch {}
+        await repairDatabaseIntegrity()
+        return 1
+      }
+      try { fs.unlinkSync(tempFile) } catch {}
+    } catch (e: any) {
+      console.warn('CLI SQL execution notice, falling back to query loop:', e.message)
+    }
+  }
+
+  // Fallback: Parse statements
   const queries = sqlContent
     .split(/;\s*$/m)
     .map((q) => q.trim())
