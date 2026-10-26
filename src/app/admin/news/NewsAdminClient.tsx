@@ -229,23 +229,107 @@ export function NewsAdminClient({
     setModalOpen(true)
   }
 
+  // Client-side helper: Downscale & optimize large photos before upload to avoid HTTP 413 / Nginx body size limits
+  const optimizeImageForUpload = async (
+    file: File,
+    maxDimension = 2400,
+    quality = 0.88
+  ): Promise<File> => {
+    if (
+      !file.type.startsWith('image/') ||
+      file.type.includes('svg') ||
+      file.type.includes('gif')
+    ) {
+      return file
+    }
+    // If file is already smaller than 1.5MB, no optimization needed
+    if (file.size <= 1.5 * 1024 * 1024) {
+      return file
+    }
+
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          let { width, height } = img
+          if (width <= maxDimension && height <= maxDimension && file.size <= 2 * 1024 * 1024) {
+            resolve(file)
+            return
+          }
+
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width)
+              width = maxDimension
+            } else {
+              width = Math.round((width * maxDimension) / height)
+              height = maxDimension
+            }
+          }
+
+          const canvas = document.createElement('canvas')
+          canvas.width = width
+          canvas.height = height
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            resolve(file)
+            return
+          }
+
+          ctx.drawImage(img, 0, 0, width, height)
+          canvas.toBlob(
+            (blob) => {
+              if (!blob || blob.size >= file.size) {
+                resolve(file)
+              } else {
+                const cleanName = file.name.replace(/\.[^.]+$/, '.jpg')
+                const optimized = new File([blob], cleanName, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                })
+                resolve(optimized)
+              }
+            },
+            'image/jpeg',
+            quality
+          )
+        }
+        img.onerror = () => resolve(file)
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => resolve(file)
+      reader.readAsDataURL(file)
+    })
+  }
+
   // Cover Image Local Upload
   const handleLocalCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     try {
+      const fileToUpload = await optimizeImageForUpload(file)
       const fd = new FormData()
       fd.append('folder', 'news')
-      fd.append('file', file)
+      fd.append('file', fileToUpload)
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Upload failed')
+      const rawText = await res.text()
+      let json: any = {}
+      try {
+        json = rawText ? JSON.parse(rawText) : {}
+      } catch {
+        throw new Error(
+          `เซิร์ฟเวอร์ตอบกลับรหัส ${res.status} (ไฟล์อาจมีขนาดใหญ่เกินไป)`
+        )
+      }
+      if (!res.ok) throw new Error(json.error || `Upload failed with status ${res.status}`)
       setForm((prev) => ({
         ...prev,
         cover_image: json.path || json.url,
       }))
+      swalSuccess('อัปโหลดภาพปกสำเร็จ', 'ภาพปกถูกบันทึกเรียบร้อยแล้ว')
     } catch (err: any) {
-      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message)
+      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message || '')
     } finally {
       e.target.value = ''
     }
@@ -260,20 +344,26 @@ export function NewsAdminClient({
       fd.append('folder', 'news')
       fd.append('file', file)
       const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-      const json = await res.json()
+      const rawText = await res.text()
+      let json: any = {}
+      try {
+        json = rawText ? JSON.parse(rawText) : {}
+      } catch {
+        throw new Error(`เซิร์ฟเวอร์ตอบกลับรหัส ${res.status}`)
+      }
       if (!res.ok) throw new Error(json.error || 'Upload failed')
       setForm((prev) => ({
         ...prev,
         pdf_path: json.path || json.url,
       }))
     } catch (err: any) {
-      swalError('อัปโหลด PDF ไม่สำเร็จ', err.message)
+      swalError('อัปโหลด PDF ไม่สำเร็จ', err.message || '')
     } finally {
       e.target.value = ''
     }
   }
 
-  // Multi Image Upload & Batch Handling
+  // Multi Image Upload & Batch Handling (One-by-one sequential to guarantee Nginx/Cloudflare body stability)
   const uploadFilesBatch = async (files: FileList | File[]) => {
     const fileArray = Array.from(files).filter((f) => f.type.startsWith('image/'))
     if (fileArray.length === 0) {
@@ -282,27 +372,70 @@ export function NewsAdminClient({
     }
 
     setUploadingMulti(true)
-    setUploadProgress({ total: fileArray.length, current: 0 })
-    try {
-      const fd = new FormData()
-      fd.append('folder', 'news')
-      for (let i = 0; i < fileArray.length; i++) {
-        fd.append('files', fileArray[i])
+    const total = fileArray.length
+    setUploadProgress({ total, current: 0 })
+
+    const uploadedPaths: string[] = []
+    let failedCount = 0
+
+    for (let i = 0; i < total; i++) {
+      setUploadProgress({ total, current: i + 1 })
+      const rawFile = fileArray[i]
+
+      try {
+        // Optimize large images if > 1.5MB to prevent Nginx 413 / Gateway timeouts
+        const fileToUpload = await optimizeImageForUpload(rawFile)
+
+        const fd = new FormData()
+        fd.append('folder', 'news')
+        fd.append('file', fileToUpload)
+
+        const res = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: fd,
+        })
+
+        const rawText = await res.text()
+        let json: any = {}
+        try {
+          json = rawText ? JSON.parse(rawText) : {}
+        } catch {
+          throw new Error(
+            `เซิร์ฟเวอร์ตอบกลับรหัส ${res.status} (ไฟล์อาจมีขนาดใหญ่เกินไป หรือ Nginx ปฏิเสธ)`
+          )
+        }
+
+        if (!res.ok) {
+          throw new Error(json.error || `HTTP ${res.status}`)
+        }
+
+        const path = json.path || json.url || (json.files && json.files[0]?.path)
+        if (path) {
+          uploadedPaths.push(path)
+          // Incrementally update form so user sees images appear immediately as each finishes!
+          setForm((prev) => ({
+            ...prev,
+            additional_images: [...prev.additional_images, path],
+          }))
+        }
+      } catch (err: any) {
+        console.error(`Failed uploading file ${rawFile.name}:`, err)
+        failedCount++
       }
-      const res = await fetch('/api/admin/upload', { method: 'POST', body: fd })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Upload failed')
-      const newPaths = (json.files || []).map((f: any) => f.path)
-      setForm((prev) => ({
-        ...prev,
-        additional_images: [...prev.additional_images, ...newPaths],
-      }))
-      swalSuccess('อัปโหลดสำเร็จ', `เพิ่มรูปภาพกิจกรรมเรียบร้อยแล้ว ${newPaths.length} รูป`)
-    } catch (err: any) {
-      swalError('อัปโหลดรูปภาพไม่สำเร็จ', err.message || '')
-    } finally {
-      setUploadingMulti(false)
-      setUploadProgress(null)
+    }
+
+    setUploadingMulti(false)
+    setUploadProgress(null)
+
+    if (failedCount === 0) {
+      swalSuccess('อัปโหลดสำเร็จ', `เพิ่มรูปภาพกิจกรรมเรียบร้อยแล้ว ${uploadedPaths.length} รูป`)
+    } else if (uploadedPaths.length > 0) {
+      swalWarning(
+        'อัปโหลดเสร็จสิ้นบางส่วน',
+        `อัปโหลดสำเร็จ ${uploadedPaths.length} รูป (ไม่สำเร็จ ${failedCount} รูป)`
+      )
+    } else {
+      swalError('อัปโหลดรูปภาพไม่สำเร็จ', 'ไม่สามารถอัปโหลดไฟล์ได้ กรุณาลองใหม่อีกครั้ง')
     }
   }
 
