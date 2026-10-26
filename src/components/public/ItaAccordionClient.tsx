@@ -203,8 +203,38 @@ export default function ItaAccordionClient({
   };
 
   return (
-    <>
+    <div className="w-full max-w-full overflow-x-clip min-w-0">
       <style jsx global>{`
+        .custom-editor-content,
+        .prose {
+          overflow-wrap: anywhere !important;
+          word-break: break-word !important;
+          max-width: 100% !important;
+        }
+        .custom-editor-content table,
+        .prose table {
+          display: block !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          overflow-x: auto !important;
+        }
+        .custom-editor-content img,
+        .prose img {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+        .custom-editor-content pre,
+        .prose pre {
+          max-width: 100% !important;
+          overflow-x: auto !important;
+          white-space: pre-wrap !important;
+          word-break: break-all !important;
+        }
+        .custom-editor-content a,
+        .prose a {
+          word-break: break-all !important;
+          overflow-wrap: anywhere !important;
+        }
         .custom-editor-content ol,
         .prose ol {
           list-style-type: decimal !important;
@@ -234,7 +264,7 @@ export default function ItaAccordionClient({
       `}</style>
 
       {/* Banner Section */}
-      <section className="w-full relative overflow-hidden border-b border-slate-200/50 bg-slate-950 flex justify-center">
+      <section className="w-full max-w-full relative overflow-hidden border-b border-slate-200/50 bg-slate-950 flex justify-center">
         {activeCoverBanner ? (
           <>
             {/* Blurred background */}
@@ -248,7 +278,7 @@ export default function ItaAccordionClient({
             <div className="relative z-10 w-full max-w-7xl mx-auto shadow-2xl flex justify-center">
               <img
                 src={normalizeImageUrl(activeCoverBanner)}
-                className="w-full h-auto object-contain block max-h-[220px] sm:max-h-[360px] md:max-h-[440px]"
+                className="w-full max-w-full h-auto object-contain block max-h-[220px] sm:max-h-[360px] md:max-h-[440px]"
                 alt="ITA Banner"
               />
             </div>
@@ -265,10 +295,10 @@ export default function ItaAccordionClient({
       </section>
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6">
+      <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-6 min-w-0">
         {/* Year Selector & Badges Section */}
-        <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 shadow-xs">
-          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6">
+        <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 shadow-xs w-full max-w-full min-w-0">
+          <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6 min-w-0">
             <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0 shadow-xs">
                 <Calendar className="w-5 h-5" />
@@ -305,15 +335,15 @@ export default function ItaAccordionClient({
           </div>
 
           {/* Search Box & Quick Controls */}
-          <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3">
-            <div className="relative flex-1">
+          <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="relative flex-1 min-w-0">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="ค้นหาข้อ เช่น O1, โครงสร้าง, งบประมาณ..."
-                className="w-full pl-9 pr-9 py-2 sm:py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none transition"
+                className="w-full pl-9 pr-9 py-2 sm:py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-orange-500 rounded-xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 outline-none transition min-w-0"
               />
               {searchQuery && (
                 <button
@@ -330,14 +360,14 @@ export default function ItaAccordionClient({
               <button
                 type="button"
                 onClick={expandAll}
-                className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
+                className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer whitespace-nowrap"
               >
                 ขยายทั้งหมด
               </button>
               <button
                 type="button"
                 onClick={collapseAll}
-                className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer"
+                className="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition text-xs cursor-pointer whitespace-nowrap"
               >
                 ยุบทั้งหมด
               </button>
@@ -346,38 +376,40 @@ export default function ItaAccordionClient({
 
           {/* Quick Sub-Topic Chips (Horizontal Scroll on Mobile/Desktop) */}
           {allSubTopics.length > 0 && (
-            <div className="mt-3.5 pt-3.5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              <button
-                type="button"
-                onClick={() => setActiveSubCode('all')}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition cursor-pointer ${
-                  activeSubCode === 'all'
-                    ? 'bg-orange-600 text-white shadow-xs'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                }`}
-              >
-                ทั้งหมด
-              </button>
-              {allSubTopics.map((sub) => {
-                const shortName = sub.name.split('(')[0].trim();
-                return (
-                  <button
-                    key={sub.id}
-                    type="button"
-                    onClick={() => setActiveSubCode(sub.code)}
-                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
-                      activeSubCode === sub.code
-                        ? 'bg-orange-600 text-white shadow-xs'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
-                    }`}
-                  >
-                    <span>ตัวชี้วัด {sub.code}</span>
-                    <span className="hidden md:inline font-normal text-[11px] opacity-85 max-w-[200px] truncate">
-                      {shortName}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="mt-3.5 pt-3.5 border-t border-slate-100 w-full max-w-full min-w-0 overflow-x-auto no-scrollbar pb-1">
+              <div className="flex items-center gap-2 w-max min-w-full">
+                <button
+                  type="button"
+                  onClick={() => setActiveSubCode('all')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition cursor-pointer ${
+                    activeSubCode === 'all'
+                      ? 'bg-orange-600 text-white shadow-xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  ทั้งหมด
+                </button>
+                {allSubTopics.map((sub) => {
+                  const shortName = sub.name.split('(')[0].trim();
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      onClick={() => setActiveSubCode(sub.code)}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition flex items-center gap-1.5 cursor-pointer ${
+                        activeSubCode === sub.code
+                          ? 'bg-orange-600 text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                      }`}
+                    >
+                      <span>ตัวชี้วัด {sub.code}</span>
+                      <span className="hidden md:inline font-normal text-[11px] opacity-85 max-w-[200px] truncate">
+                        {shortName}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>
@@ -427,22 +459,22 @@ export default function ItaAccordionClient({
                       <button
                         type="button"
                         onClick={() => toggleSub(sub.id)}
-                        className="w-full px-3 sm:px-6 py-3.5 sm:py-4 bg-slate-50/70 hover:bg-slate-100/70 border-b border-slate-200/80 flex items-center justify-between gap-2.5 sm:gap-3 text-left transition cursor-pointer overflow-hidden"
+                        className="w-full max-w-full px-3 sm:px-6 py-3.5 sm:py-4 bg-slate-50/70 hover:bg-slate-100/70 border-b border-slate-200/80 flex items-center justify-between gap-2.5 sm:gap-3 text-left transition cursor-pointer overflow-hidden min-w-0"
                       >
                         <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                           <span className="px-2.5 py-1 bg-orange-600 text-white rounded-xl text-xs sm:text-sm font-extrabold shrink-0 shadow-xs whitespace-nowrap">
                             ตัวชี้วัด {sub.code}
                           </span>
-                          <h3 className="font-bold text-slate-800 text-xs sm:text-base leading-snug break-words flex-1">
+                          <h3 className="font-bold text-slate-800 text-xs sm:text-base leading-snug break-words [overflow-wrap:anywhere] min-w-0 flex-1">
                             {subTitle}
                           </h3>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-[11px] font-bold text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
+                          <span className="text-[11px] font-bold text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded-full whitespace-nowrap">
                             {totalItems} ข้อ
                           </span>
-                          <div className="w-7 h-7 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500">
+                          <div className="w-7 h-7 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-500 shrink-0">
                             {isCollapsed ? (
                               <ChevronDown className="w-4 h-4" />
                             ) : (
@@ -454,18 +486,18 @@ export default function ItaAccordionClient({
 
                       {/* Sub Topic Content */}
                       {!isCollapsed && (
-                        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+                        <div className="p-3 sm:p-6 space-y-4 sm:space-y-6 w-full max-w-full min-w-0 overflow-hidden">
                           {sub.tables.map((table) => (
-                            <div key={table.id} className="space-y-3">
+                            <div key={table.id} className="space-y-3 w-full max-w-full min-w-0">
                               {table.title && (
-                                <h4 className="font-bold text-slate-800 text-sm sm:text-base leading-snug flex items-center gap-2 px-1">
-                                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-orange-600 rounded-full inline-block"></span>
-                                  <span>{table.title}</span>
+                                <h4 className="font-bold text-slate-800 text-sm sm:text-base leading-snug flex items-center gap-2 px-1 break-words [overflow-wrap:anywhere] min-w-0">
+                                  <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-orange-600 rounded-full inline-block shrink-0"></span>
+                                  <span className="min-w-0 flex-1">{table.title}</span>
                                 </h4>
                               )}
 
                               {/* Desktop Table View (Tablet & PC) */}
-                              <div className="hidden lg:block overflow-x-auto border border-slate-200 rounded-2xl">
+                              <div className="hidden lg:block w-full max-w-full overflow-x-auto border border-slate-200 rounded-2xl">
                                 <table className="w-full text-left border-collapse">
                                   <thead>
                                     <tr className="border-b border-slate-200 text-slate-600 text-xs font-bold uppercase bg-slate-50">
@@ -595,7 +627,7 @@ export default function ItaAccordionClient({
                               </div>
 
                               {/* Mobile Card View (optimized for Mobile & Tablets under lg) */}
-                              <div className="space-y-3 lg:hidden">
+                              <div className="space-y-3 lg:hidden w-full max-w-full min-w-0">
                                 {table.items.length === 0 ? (
                                   <div className="text-center py-6 text-slate-400 italic text-xs bg-slate-50 rounded-2xl border border-slate-100">
                                     ไม่มีข้อมูลสำหรับตารางนี้
@@ -604,27 +636,27 @@ export default function ItaAccordionClient({
                                   table.items.map((item) => (
                                     <div
                                       key={item.id}
-                                      className="p-3.5 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs hover:border-orange-300 transition"
+                                      className="p-3 sm:p-3.5 bg-slate-50/70 border border-slate-200/80 rounded-2xl space-y-3 shadow-xs hover:border-orange-300 transition w-full max-w-full min-w-0 overflow-hidden"
                                     >
                                       {/* Header: Code Badge + Title */}
-                                      <div className="flex items-start gap-2.5 pb-2.5 border-b border-slate-200/70">
-                                        <span className="px-2.5 py-1 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-lg shrink-0 shadow-xs">
+                                      <div className="flex items-start gap-2.5 pb-2.5 border-b border-slate-200/70 min-w-0">
+                                        <span className="px-2.5 py-1 bg-gradient-to-r from-orange-600 to-amber-600 text-white text-xs font-black rounded-lg shrink-0 shadow-xs whitespace-nowrap">
                                           {item.o_number}
                                         </span>
-                                        <h5 className="text-xs sm:text-sm font-bold text-slate-800 leading-snug flex-1 text-left">
+                                        <h5 className="text-xs sm:text-sm font-bold text-slate-800 leading-snug flex-1 text-left min-w-0 break-words [overflow-wrap:anywhere]">
                                           {item.title}
                                         </h5>
                                       </div>
 
                                       {/* Details (องค์ประกอบด้านข้อมูล) */}
                                       {item.description && (
-                                        <div className="bg-white p-3 rounded-xl border border-slate-200/60 space-y-1.5 shadow-2xs">
+                                        <div className="bg-white p-3 rounded-xl border border-slate-200/60 space-y-1.5 shadow-2xs w-full max-w-full min-w-0 overflow-hidden">
                                           <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wide flex items-center gap-1">
-                                            <Layers className="w-3 h-3" />
+                                            <Layers className="w-3 h-3 shrink-0" />
                                             <span>องค์ประกอบด้านข้อมูล:</span>
                                           </span>
                                           <div
-                                            className="text-xs text-slate-700 space-y-1.5 leading-relaxed custom-editor-content font-medium"
+                                            className="text-xs text-slate-700 space-y-1.5 leading-relaxed custom-editor-content font-medium break-words [overflow-wrap:anywhere] w-full max-w-full min-w-0"
                                             dangerouslySetInnerHTML={{
                                               __html: formatElementDetail(
                                                 item.description
@@ -635,23 +667,23 @@ export default function ItaAccordionClient({
                                       )}
 
                                       {/* Action / Links Buttons */}
-                                      <div className="pt-0.5 space-y-2">
+                                      <div className="pt-0.5 space-y-2 w-full max-w-full min-w-0">
                                         {item.links && item.links.length > 0 ? (
-                                          <div className="flex flex-col gap-2">
+                                          <div className="flex flex-col gap-2 w-full max-w-full min-w-0">
                                             {item.links.map((link) => {
                                               if (link.link_type === 'text') {
                                                 return (
                                                   <div
                                                     key={link.id}
-                                                    className="text-left bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 space-y-1 w-full"
+                                                    className="text-left bg-amber-50/50 border border-amber-200/80 rounded-xl p-3 space-y-1 w-full max-w-full min-w-0 overflow-hidden"
                                                   >
                                                     {link.label && (
-                                                      <span className="text-[10px] font-bold text-amber-900 block">
+                                                      <span className="text-[10px] font-bold text-amber-900 block break-words [overflow-wrap:anywhere]">
                                                         {link.label}
                                                       </span>
                                                     )}
                                                     <div
-                                                      className="text-xs text-slate-700 leading-relaxed font-medium prose prose-sm max-w-none"
+                                                      className="text-xs text-slate-700 leading-relaxed font-medium prose prose-sm max-w-none break-words [overflow-wrap:anywhere] w-full max-w-full min-w-0"
                                                       dangerouslySetInnerHTML={{
                                                         __html: normalizeHtmlContent(
                                                           link.url || ''
@@ -681,23 +713,23 @@ export default function ItaAccordionClient({
                                                   href={cleanUrl}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
-                                                  className={`inline-flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition shadow-xs w-full min-h-[42px] active:scale-[0.99] cursor-pointer ${
+                                                  className={`inline-flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition shadow-xs w-full max-w-full min-w-0 min-h-[42px] active:scale-[0.99] cursor-pointer overflow-hidden ${
                                                     isFile
                                                       ? 'bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200'
                                                       : 'bg-orange-50 hover:bg-orange-100 text-orange-900 border border-orange-200'
                                                   }`}
                                                 >
-                                                  <div className="flex items-center gap-2 min-w-0">
+                                                  <div className="flex items-center gap-2 min-w-0 flex-1">
                                                     {isFile ? (
                                                       <FileText className="w-4 h-4 text-rose-600 shrink-0" />
                                                     ) : (
                                                       <ExternalLink className="w-4 h-4 text-orange-600 shrink-0" />
                                                     )}
-                                                    <span className="truncate text-left">
+                                                    <span className="truncate text-left flex-1">
                                                       {label}
                                                     </span>
                                                   </div>
-                                                  <span className="text-[10px] uppercase font-bold opacity-80 shrink-0 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-2xs">
+                                                  <span className="text-[10px] uppercase font-bold opacity-80 shrink-0 bg-white border border-slate-200 px-2 py-0.5 rounded-md shadow-2xs whitespace-nowrap">
                                                     {isFile ? 'PDF/FILE' : 'เปิดดู'}
                                                   </span>
                                                 </a>
@@ -705,7 +737,7 @@ export default function ItaAccordionClient({
                                             })}
                                           </div>
                                         ) : (
-                                          <div className="text-center py-2 text-slate-400 italic text-xs bg-slate-100/50 rounded-xl border border-dashed border-slate-200">
+                                          <div className="text-center py-2 text-slate-400 italic text-xs bg-slate-100/50 rounded-xl border border-dashed border-slate-200 w-full">
                                             ยังไม่มีการเผยแพร่ข้อมูล
                                           </div>
                                         )}
@@ -738,6 +770,6 @@ export default function ItaAccordionClient({
           <ArrowUp className="w-5 h-5" />
         </button>
       )}
-    </>
+    </div>
   );
 }

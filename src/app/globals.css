@@ -9,8 +9,15 @@
   --theme-nav-bg: #7c2d12;
 }
 
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-sans);
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 .text-theme {
@@ -103,10 +110,6 @@ div:where(.swal2-container) button.swal2-styled {
 /* ========================================================================= */
 /* Custom Modern, Smooth & Minimal Scrollbars                                */
 /* ========================================================================= */
-html {
-  scroll-behavior: smooth;
-}
-
 /* Global scrollbar for Firefox */
 * {
   scrollbar-width: thin;

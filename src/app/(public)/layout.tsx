@@ -78,7 +78,7 @@ export default async function PublicLayout({
   const theme = getThemeClasses(settings.theme_color || 'orange')
 
   return (
-    <div className="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-between">
+    <div className="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-between w-full max-w-full overflow-x-clip">
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -97,7 +97,7 @@ export default async function PublicLayout({
         navTree={navTree}
         isLoggedIn={Boolean(session)}
       />
-      <main className="flex-1 flex flex-col">{children}</main>
+      <main className="flex-1 flex flex-col w-full max-w-full min-w-0 overflow-x-clip">{children}</main>
       <Footer settings={settings} />
       <GlobalLightbox />
       {settings.pdpa_enabled !== '0' && (
