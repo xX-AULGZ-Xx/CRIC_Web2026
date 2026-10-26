@@ -76,7 +76,8 @@ function formatElementDetail(raw: string | null | undefined): string {
   let idx = 1;
   return lines
     .map((line) => {
-      const clean = line.replace(/^[-•*]\s*/, '').trim();
+      // Strip any existing prefixes (e.g. "1)", "1.", "(1)", "1.1)", "-", "•", "*")
+      const clean = line.replace(/^(\(?\d+(\.\d+)*[\)\.]|[-•*])\s*/, '').trim();
       return `<div>${idx++}) ${clean}</div>`;
     })
     .join('');
@@ -268,24 +269,37 @@ export default function ItaAccordionClient({
         {/* Year Selector & Badges Section */}
         <section className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs">
           <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0 shadow-xs">
-                <Calendar className="w-5 h-5" />
+            <div className="flex items-center justify-between gap-3 flex-1 min-w-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 shrink-0 shadow-xs">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+                    ปีงบประมาณการประเมิน ITA
+                  </h2>
+                  <p className="text-xs text-slate-500 truncate">
+                    ตรวจสอบการเปิดเผยข้อมูลสาธารณะ (OIT) ประจำปี
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <span>ปีงบประมาณการประเมิน ITA</span>
-                  {activeCoverBadge && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs font-black">
-                      <Award className="w-3.5 h-3.5" />
-                      {activeCoverBadge}
-                    </span>
-                  )}
-                </h2>
-                <p className="text-xs text-slate-500 truncate">
-                  ตรวจสอบการเปิดเผยข้อมูลสาธารณะ (OIT) ประจำปี
-                </p>
-              </div>
+
+              {activeCoverBadge && (
+                /\.(webp|png|jpe?g|gif|svg)$/i.test(activeCoverBadge.trim()) ? (
+                  <div className="shrink-0 flex items-center ml-2">
+                    <img
+                      src={normalizeImageUrl(activeCoverBadge)}
+                      alt="ITA Badge"
+                      className="h-10 sm:h-12 w-auto max-w-[120px] object-contain drop-shadow-sm"
+                    />
+                  </div>
+                ) : (
+                  <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-black shadow-xs">
+                    <Award className="w-3.5 h-3.5 text-amber-600" />
+                    <span>{activeCoverBadge}</span>
+                  </span>
+                )
+              )}
             </div>
 
             <div className="relative w-full md:w-64">
@@ -355,7 +369,7 @@ export default function ItaAccordionClient({
               <button
                 type="button"
                 onClick={() => setActiveSubCode('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition ${
                   activeSubCode === 'all'
                     ? 'bg-orange-600 text-white shadow-xs'
                     : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
@@ -368,7 +382,7 @@ export default function ItaAccordionClient({
                   key={sub.id}
                   type="button"
                   onClick={() => setActiveSubCode(sub.code)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition flex items-center gap-1.5 ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0 whitespace-nowrap transition flex items-center gap-1.5 ${
                     activeSubCode === sub.code
                       ? 'bg-orange-600 text-white shadow-xs'
                       : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
