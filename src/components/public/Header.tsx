@@ -180,16 +180,47 @@ export function Header({
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const [currentSearch, setCurrentSearch] = useState('')
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentSearch(window.location.search)
+    }
+  }, [pathname])
+
   const isMenuActive = (menuUrl: string): boolean => {
     if (!menuUrl || menuUrl === '#') return false
     if (menuUrl.startsWith('http://') || menuUrl.startsWith('https://')) return false
 
-    const [urlPath] = menuUrl.split('?')
+    const [urlPath, urlQuery] = menuUrl.split('?')
+
+    // 1. If menu item has query parameters (e.g. /curriculum?id=23 or ?slug=vision)
+    if (urlQuery) {
+      if (pathname !== urlPath) return false
+      if (!currentSearch) return false
+      const searchParams = new URLSearchParams(currentSearch.replace(/^\?/, ''))
+      const menuParams = new URLSearchParams(urlQuery)
+      for (const [key, val] of menuParams.entries()) {
+        if (searchParams.get(key) !== val) {
+          return false
+        }
+      }
+      return true
+    }
+
+    // 2. Exact match for homepage
     if (urlPath === '/' && pathname === '/') {
       return true
     }
-    if (urlPath !== '/' && (pathname === urlPath || pathname.startsWith(`${urlPath}/`))) {
-      return true
+
+    // 3. For pages without query parameters:
+    if (urlPath !== '/') {
+      if (pathname === urlPath) {
+        return true
+      }
+      if (pathname.startsWith(`${urlPath}/`)) {
+        return true
+      }
     }
     return false
   }
@@ -394,45 +425,64 @@ export function Header({
 
                     {/* Level 2 Dropdown List */}
                     <div className="absolute left-1/2 -translate-x-1/2 pt-2 w-64 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-200 z-50">
-                      <div className="bg-white border border-slate-100 shadow-xl rounded-2xl p-2">
+                      <div className="bg-white/98 backdrop-blur-md border border-slate-100 shadow-2xl rounded-2xl p-2 space-y-0.5">
                         {parent.children.map((child) => {
                           const hasSubChildren = child.children.length > 0
                           const childActive = isBranchActive(child)
-                            ? `${theme.badgeBg} ${theme.primaryText}`
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                            ? `${theme.accentBg} ${theme.accentText} font-bold ring-1 ring-orange-200/50`
+                            : 'text-slate-700 hover:bg-orange-50/70 hover:text-orange-600 group-hover/sub:bg-orange-50/70 group-hover/sub:text-orange-600'
 
                           if (hasSubChildren) {
                             return (
                               <div key={child.id} className="relative group/sub">
                                 <div
-                                  className={`w-full flex items-center justify-between px-4 py-2.5 text-sm font-bold rounded-xl transition cursor-default ${childActive}`}
+                                  className={`w-full flex items-center justify-between px-3.5 py-2.5 text-sm font-semibold rounded-xl transition cursor-pointer select-none ${childActive}`}
                                 >
-                                  <span>{child.label}</span>
-                                  <ChevronRight className="w-4 h-4 opacity-50" />
+                                  <span className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover/sub:bg-orange-500 transition-colors" />
+                                    <span>{child.label}</span>
+                                  </span>
+                                  <div className="flex items-center gap-1.5 text-xs text-slate-400 group-hover/sub:text-slate-600">
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 group-hover/sub:bg-orange-100 group-hover/sub:text-orange-700 text-slate-500 font-medium transition-colors">
+                                      {child.children.length} สาขา
+                                    </span>
+                                    <ChevronRight className="w-3.5 h-3.5 group-hover/sub:translate-x-0.5 transition-transform" />
+                                  </div>
                                 </div>
                                 {/* Level 3 Sub-dropdown List */}
-                                <div className="absolute left-full top-0 pl-1 w-64 opacity-0 invisible translate-x-2 group-hover/sub:opacity-100 group-hover/sub:visible group-hover/sub:translate-x-0 transition-all duration-200 z-50">
-                                  <div className="bg-white border border-slate-100 shadow-xl rounded-2xl p-2">
-                                    {child.children.map((subChild) => {
-                                      const subChildActive = isMenuActive(subChild.url)
-                                        ? `${theme.badgeBg} ${theme.primaryText}`
-                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                                      return (
-                                        <Link
-                                          key={subChild.id}
-                                          href={subChild.url}
-                                          target={subChild.target_blank ? '_blank' : undefined}
-                                          rel={
-                                            subChild.target_blank
-                                              ? 'noopener noreferrer'
-                                              : undefined
-                                          }
-                                          className={`block px-4 py-2.5 text-sm font-bold rounded-xl transition ${subChildActive}`}
-                                        >
-                                          {subChild.label}
-                                        </Link>
-                                      )
-                                    })}
+                                <div className="absolute left-full top-0 pl-2 w-72 opacity-0 invisible translate-x-2 group-hover/sub:opacity-100 group-hover/sub:visible group-hover/sub:translate-x-0 transition-all duration-200 z-50 before:absolute before:inset-y-0 before:-left-3 before:w-5 before:content-['']">
+                                  <div className="bg-white/98 backdrop-blur-md border border-slate-100 shadow-2xl rounded-2xl p-2 max-h-[75vh] overflow-y-auto overscroll-contain">
+                                    <div className="px-3 py-1.5 mb-1.5 border-b border-slate-100 flex items-center justify-between">
+                                      <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                                        ระดับ {child.label}
+                                      </span>
+                                      <span className="text-[10px] text-slate-400 font-medium">
+                                        {child.children.length} สาขาวิชา
+                                      </span>
+                                    </div>
+                                    <div className="space-y-0.5">
+                                      {child.children.map((subChild) => {
+                                        const subChildActive = isMenuActive(subChild.url)
+                                          ? `${theme.accentBg} ${theme.accentText} font-bold ring-1 ring-orange-200/50`
+                                          : 'text-slate-600 hover:bg-orange-50/70 hover:text-orange-600'
+                                        return (
+                                          <Link
+                                            key={subChild.id}
+                                            href={subChild.url}
+                                            target={subChild.target_blank ? '_blank' : undefined}
+                                            rel={
+                                              subChild.target_blank
+                                                ? 'noopener noreferrer'
+                                                : undefined
+                                            }
+                                            className={`block px-3 py-2 text-xs font-semibold rounded-lg transition truncate ${subChildActive}`}
+                                            title={subChild.label}
+                                          >
+                                            {subChild.label}
+                                          </Link>
+                                        )
+                                      })}
+                                    </div>
                                   </div>
                                 </div>
                               </div>
@@ -445,9 +495,10 @@ export function Header({
                               href={child.url}
                               target={child.target_blank ? '_blank' : undefined}
                               rel={child.target_blank ? 'noopener noreferrer' : undefined}
-                              className={`block px-4 py-2.5 text-sm font-bold rounded-xl transition ${childActive}`}
+                              className={`flex items-center gap-2 px-3.5 py-2.5 text-sm font-semibold rounded-xl transition ${childActive}`}
                             >
-                              {child.label}
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-300 transition-colors" />
+                              <span>{child.label}</span>
                             </Link>
                           )
                         })}
