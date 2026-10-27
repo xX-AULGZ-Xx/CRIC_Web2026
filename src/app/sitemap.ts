@@ -15,7 +15,7 @@ function toW3CDate(d: Date | string | null | undefined, fallback: Date): string 
   }
 }
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+export async function getSitemapEntries(): Promise<MetadataRoute.Sitemap> {
   const settings = await getSettings()
   const rawBaseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ||
@@ -43,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date()
   const todayStr = toW3CDate(now, now)
 
-  // 1. Static Core Pages
+  // 1. Static Core Pages (Matches old PHP sitemap.php & new Next.js routes)
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${baseUrl}/`,
@@ -54,14 +54,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${baseUrl}/about`,
       lastModified: todayStr,
-      changeFrequency: 'weekly',
-      priority: 0.9,
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/executives`,
       lastModified: todayStr,
       changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/personnel`,
@@ -73,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/curriculum`,
       lastModified: todayStr,
       changeFrequency: 'weekly',
-      priority: 0.9,
+      priority: 0.8,
     },
     {
       url: `${baseUrl}/news`,
@@ -85,13 +85,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/gallery`,
       lastModified: todayStr,
       changeFrequency: 'weekly',
-      priority: 0.8,
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/downloads`,
       lastModified: todayStr,
       changeFrequency: 'weekly',
-      priority: 0.8,
+      priority: 0.7,
     },
     {
       url: `${baseUrl}/ita`,
@@ -103,19 +103,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/complaints`,
       lastModified: todayStr,
       changeFrequency: 'monthly',
-      priority: 0.7,
+      priority: 0.5,
     },
     {
       url: `${baseUrl}/sitemap`,
       lastModified: todayStr,
       changeFrequency: 'weekly',
-      priority: 0.7,
+      priority: 0.5,
     },
   ]
 
   // 2. Dynamic Content from Database
   try {
-    const [news, staticPages, curriculums, galleries, depts] = await Promise.all([
+    const [news, staticPages, curriculums, galleries, depts, personnelList] = await Promise.all([
       prisma.news.findMany({
         where: { status: 'published' },
         select: { id: true, updated_at: true, created_at: true },
@@ -128,6 +128,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
       prisma.curriculums.findMany({
         select: { id: true, created_at: true },
+        orderBy: { id: 'desc' },
       }),
       prisma.galleries.findMany({
         select: { id: true, created_at: true },
@@ -136,6 +137,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }),
       prisma.personnel_categories.findMany({
         select: { id: true, parent_id: true },
+        orderBy: [{ order_num: 'asc' }, { id: 'asc' }],
+      }),
+      prisma.personnel.findMany({
+        where: { is_active: true },
+        select: { id: true },
+        orderBy: { id: 'desc' },
+        take: 500,
       }),
     ])
 
@@ -143,21 +151,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/news/${item.id}`,
       lastModified: toW3CDate(item.updated_at || item.created_at, now),
       changeFrequency: 'weekly',
-      priority: 0.7,
+      priority: 0.6,
     }))
 
     const pageUrls: MetadataRoute.Sitemap = staticPages.map((page) => ({
       url: `${baseUrl}/${encodeURIComponent(page.slug)}`,
       lastModified: toW3CDate(page.updated_at, now),
       changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.7,
     }))
 
     const curriculumUrls: MetadataRoute.Sitemap = curriculums.map((c) => ({
       url: `${baseUrl}/curriculum/${c.id}`,
       lastModified: toW3CDate(c.created_at, now),
       changeFrequency: 'monthly',
-      priority: 0.8,
+      priority: 0.6,
     }))
 
     const galleryUrls: MetadataRoute.Sitemap = galleries.map((g) => ({
@@ -172,8 +180,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ? `${baseUrl}/personnel/sub-dept/${d.id}`
         : `${baseUrl}/personnel/dept/${d.id}`,
       lastModified: todayStr,
-      changeFrequency: 'monthly',
+      changeFrequency: 'weekly',
       priority: 0.6,
+    }))
+
+    const personnelUrls: MetadataRoute.Sitemap = personnelList.map((p) => ({
+      url: `${baseUrl}/personnel/${p.id}`,
+      lastModified: todayStr,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     }))
 
     return [
@@ -183,9 +198,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...curriculumUrls,
       ...galleryUrls,
       ...deptUrls,
+      ...personnelUrls,
     ]
   } catch (err) {
     console.error('Error generating dynamic sitemap:', err)
     return staticRoutes
   }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return getSitemapEntries()
 }
