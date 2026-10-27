@@ -530,7 +530,7 @@ async function renderExecutivesBlock(customTitleRaw?: string, customSubRaw?: str
                   </div>
                 </div>
                 <span className="px-3 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-full text-[10px] font-bold tracking-wider uppercase mb-2">
-                  ผู้บริหารสูงสุด
+                  ผู้อำนวยการ
                 </span>
                 <h3 className="text-xl font-bold text-white mb-1 group-hover:text-amber-300 transition-colors">
                   {person.name}

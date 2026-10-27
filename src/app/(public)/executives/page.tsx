@@ -211,7 +211,7 @@ export default async function ExecutivesPage() {
                           <div className="flex-1 space-y-3.5 text-center sm:text-left pt-2">
                             <span className="text-[10px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full inline-flex items-center gap-1.5 uppercase shadow-xs">
                               <Crown className="w-3.5 h-3.5 text-amber-600" />
-                              <span>ผู้บริหารสูงสุด</span>
+                              <span>ผู้อำนวยการ</span>
                             </span>
 
                             <h2 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-snug">
