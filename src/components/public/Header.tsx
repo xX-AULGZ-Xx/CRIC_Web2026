@@ -379,9 +379,9 @@ export function Header({
               </div>
             )}
             <div className="flex flex-col justify-center max-w-[200px] sm:max-w-[320px] md:max-w-md my-auto">
-              <h1 className="font-extrabold text-slate-900 text-sm sm:text-base md:text-lg leading-none tracking-tight truncate">
+              <span className="font-extrabold text-slate-900 text-sm sm:text-base md:text-lg leading-none tracking-tight truncate">
                 {settings.site_name || 'วิทยาลัยการอาชีพเชียงราย'}
-              </h1>
+              </span>
               <span className="text-[8px] sm:text-[9px] text-slate-500 font-semibold uppercase tracking-wide block leading-normal mt-1 whitespace-pre-line">
                 {settings.site_name_en || 'College Web CMS System'}
               </span>

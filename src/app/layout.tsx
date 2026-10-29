@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Sarabun, Outfit } from 'next/font/google'
 import './globals.css'
 import { getSettings } from '@/lib/settings'
+import { normalizeImageUrl } from '@/lib/url-helper'
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -33,14 +34,46 @@ export async function generateMetadata(): Promise<Metadata> {
       : `/${settings.site_favicon}`
     : null
 
+  const siteTitle = settings.site_name || 'วิทยาลัยการอาชีพเชียงราย'
+  const siteDesc =
+    settings.site_description ||
+    'วิทยาลัยการอาชีพเชียงราย (Chiangrai Industrial and Community Education College) จัดการเรียนการสอนสายอาชีพ ปวช. และ ปวส. เสริมสร้างทักษะวิชาชีพสู่มาตรฐานสากล'
+  const siteLogo = settings.site_logo
+    ? normalizeImageUrl(settings.site_logo)
+    : 'https://www.cric.ac.th/uploads/file_6a27706c88d814.68152088.webp'
+
   return {
+    metadataBase: new URL('https://www.cric.ac.th'),
     title: {
-      default: settings.site_name || 'วิทยาลัยการอาชีพเชียงราย',
-      template: `%s | ${settings.site_name || 'วิทยาลัยการอาชีพเชียงราย'}`,
+      default: `${siteTitle} - จัดการศึกษาวิชาชีพ ปวช. และ ปวส. จ.เชียงราย`,
+      template: `%s | ${siteTitle}`,
     },
-    description:
-      settings.site_name_en ||
-      'Chiangrai Industrial And Community Education College',
+    description: siteDesc,
+    alternates: {
+      canonical: './',
+    },
+    openGraph: {
+      type: 'website',
+      locale: 'th_TH',
+      url: 'https://www.cric.ac.th',
+      siteName: siteTitle,
+      title: siteTitle,
+      description: siteDesc,
+      images: [
+        {
+          url: siteLogo,
+          width: 1200,
+          height: 630,
+          alt: siteTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: siteTitle,
+      description: siteDesc,
+      images: [siteLogo],
+    },
     icons: {
       icon: [
         ...(customFavicon ? [{ url: customFavicon }] : []),

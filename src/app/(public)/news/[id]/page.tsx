@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import prisma from '@/lib/prisma';
@@ -60,6 +61,86 @@ function formatDateShort(date: Date | null | undefined): string {
   return `${d.getDate()} ${THAI_MONTHS_SHORT[d.getMonth()] || ''} ${
     d.getFullYear() + 543
   }`;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id: rawIdOrSlug } = await params;
+  const decoded = decodeURIComponent(rawIdOrSlug);
+  const numericId = /^\d+$/.test(decoded) ? parseInt(decoded, 10) : null;
+
+  const article = await prisma.news.findFirst({
+    where: {
+      status: 'published',
+      OR: [
+        { slug: decoded },
+        ...(numericId !== null ? [{ id: numericId }] : []),
+      ],
+    },
+    select: {
+      id: true,
+      title: true,
+      content: true,
+      cover_image: true,
+      meta_title: true,
+      created_at: true,
+      updated_at: true,
+    },
+  });
+
+  if (!article) {
+    return {
+      title: 'ข่าวประชาสัมพันธ์',
+    };
+  }
+
+  const plainText = (article.content || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const description =
+    plainText.slice(0, 160) ||
+    'ข่าวประชาสัมพันธ์และกิจกรรม วิทยาลัยการอาชีพเชียงราย';
+
+  const title = article.meta_title || article.title;
+  const canonicalUrl = `https://www.cric.ac.th/news/${article.id}`;
+  const ogImage = article.cover_image
+    ? normalizeImageUrl(article.cover_image)
+    : 'https://www.cric.ac.th/uploads/file_6a27706c88d814.68152088.webp';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'วิทยาลัยการอาชีพเชียงราย',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+      type: 'article',
+      publishedTime: article.created_at ? article.created_at.toISOString() : undefined,
+      modifiedTime: (article.updated_at || article.created_at)?.toISOString(),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
 }
 
 export default async function NewsDetailPage({
@@ -167,8 +248,74 @@ export default async function NewsDetailPage({
 
   const pdfUrl = article.pdf_path ? normalizeImageUrl(article.pdf_path) : '';
 
+  const newsArticleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'NewsArticle',
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': `https://www.cric.ac.th/news/${article.id}`,
+    },
+    headline: article.title,
+    image: article.cover_image
+      ? [normalizeImageUrl(article.cover_image)]
+      : ['https://www.cric.ac.th/uploads/file_6a27706c88d814.68152088.webp'],
+    datePublished: article.created_at ? article.created_at.toISOString() : undefined,
+    dateModified: (article.updated_at || article.created_at)?.toISOString(),
+    author: {
+      '@type': 'Organization',
+      name: 'วิทยาลัยการอาชีพเชียงราย',
+      url: 'https://www.cric.ac.th',
+    },
+    publisher: {
+      '@type': 'EducationalOrganization',
+      name: 'วิทยาลัยการอาชีพเชียงราย',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.cric.ac.th/uploads/file_6a27706c88d814.68152088.webp',
+      },
+    },
+    description: (article.content || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 200),
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'หน้าแรก',
+        item: 'https://www.cric.ac.th',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'ข่าวประชาสัมพันธ์',
+        item: 'https://www.cric.ac.th/news',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: article.title,
+        item: `https://www.cric.ac.th/news/${article.id}`,
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(newsArticleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Breadcrumb Bar */}
       <div className="bg-slate-50 border-b border-slate-200/80 py-3.5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-xs text-slate-500 overflow-x-auto whitespace-nowrap">

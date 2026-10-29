@@ -7,7 +7,7 @@ import { Footer } from '@/components/public/Footer'
 import { GlobalLightbox } from '@/components/public/GlobalLightbox'
 import { MaintenanceView } from '@/components/public/MaintenanceView'
 import { PDPABanner } from '@/components/public/PDPABanner'
-import { normalizeLinkUrl } from '@/lib/url-helper'
+import { normalizeLinkUrl, normalizeImageUrl } from '@/lib/url-helper'
 
 export const dynamic = 'force-dynamic'
 
@@ -77,8 +77,45 @@ export default async function PublicLayout({
   const navTree = buildLevel(null, 1)
   const theme = getThemeClasses(settings.theme_color || 'orange')
 
+  const collegeSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'EducationalOrganization',
+    '@id': 'https://www.cric.ac.th/#organization',
+    name: settings.site_name || 'วิทยาลัยการอาชีพเชียงราย',
+    alternateName: [
+      settings.site_name_en || 'Chiangrai Industrial and Community Education College',
+      'วช.เชียงราย',
+      'CRIC',
+    ],
+    url: 'https://www.cric.ac.th',
+    logo: {
+      '@type': 'ImageObject',
+      url: settings.site_logo
+        ? normalizeImageUrl(settings.site_logo)
+        : 'https://www.cric.ac.th/uploads/file_6a27706c88d814.68152088.webp',
+    },
+    telephone: settings.contact_phone || '053-774589',
+    email: settings.contact_email || 'prcric@cric.ac.th',
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: 'เลขที่ 113 หมู่ 6 ต.ท่าสาย อ.เมือง',
+      addressLocality: 'เชียงราย',
+      postalCode: '57000',
+      addressCountry: 'TH',
+    },
+    sameAs: [
+      settings.social_facebook || settings.facebook_url,
+      settings.social_youtube || settings.youtube_url,
+      settings.social_line || settings.line_id,
+    ].filter(Boolean),
+  }
+
   return (
     <div className="bg-slate-50 text-slate-900 min-h-screen flex flex-col justify-between w-full max-w-full overflow-x-clip">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collegeSchema) }}
+      />
       <style
         dangerouslySetInnerHTML={{
           __html: `

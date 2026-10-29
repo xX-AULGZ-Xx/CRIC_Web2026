@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import {
@@ -82,7 +83,7 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
-}) {
+}): Promise<Metadata> {
   const { id } = await params;
   const currId = parseInt(id, 10);
   if (isNaN(currId) || currId <= 0) return { title: 'สาขาวิชา' };
@@ -90,14 +91,44 @@ export async function generateMetadata({
   const settings = await getSettings();
   const curr = await prisma.curriculums.findUnique({
     where: { id: currId },
-    select: { name: true },
+    select: { name: true, description: true, image_path: true, level: true },
   });
 
   const siteName = settings.site_name || 'วิทยาลัยการอาชีพเชียงราย';
   const name = curr?.name || 'รายละเอียดสาขาวิชา';
+  const desc =
+    curr?.description?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160) ||
+    `ข้อมูลและรายละเอียดหลักสูตรสาขาวิชา ${name} (${curr?.level || 'ปวช./ปวส.'}) ของ ${siteName}`;
+  const canonicalUrl = `https://www.cric.ac.th/curriculum/${currId}`;
+  const ogImg = curr?.image_path
+    ? normalizeImageUrl(curr.image_path)
+    : 'https://www.cric.ac.th/uploads/file_6a27706c88d814.68152088.webp';
+
   return {
-    title: `${name} - ${siteName}`,
-    description: `ข้อมูลและรายละเอียดหลักสูตรสาขาวิชา ${name} ของ ${siteName}`,
+    title: `สาขาวิชา ${name} (${curr?.level || 'หลักสูตรวิชาชีพ'})`,
+    description: desc,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: `สาขาวิชา ${name} - ${siteName}`,
+      description: desc,
+      url: canonicalUrl,
+      images: [
+        {
+          url: ogImg,
+          width: 1200,
+          height: 630,
+          alt: name,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `สาขาวิชา ${name} - ${siteName}`,
+      description: desc,
+      images: [ogImg],
+    },
   };
 }
 
@@ -167,8 +198,58 @@ export default async function CurriculumDetailPage({
     .map((l) => l.trim())
     .filter(Boolean);
 
+  const courseSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: curr.name,
+    description:
+      curr.description?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() ||
+      `หลักสูตรสาขาวิชา ${curr.name} วิทยาลัยการอาชีพเชียงราย`,
+    provider: {
+      '@type': 'EducationalOrganization',
+      name: 'วิทยาลัยการอาชีพเชียงราย',
+      sameAs: 'https://www.cric.ac.th',
+    },
+    educationalCredentialAwarded: curr.level || 'ประกาศนียบัตรวิชาชีพ',
+    occupationalCredentialAwarded: curr.career_guidelines || 'ผู้ประกอบการ / ช่างวิชาชีพ',
+    url: `https://www.cric.ac.th/curriculum/${curr.id}`,
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'หน้าแรก',
+        item: 'https://www.cric.ac.th',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'สาขาวิชาที่เปิดสอน',
+        item: 'https://www.cric.ac.th/curriculum',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: curr.name,
+        item: `https://www.cric.ac.th/curriculum/${curr.id}`,
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(courseSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       {/* Breadcrumb Bar */}
       <div className="bg-white border-b border-slate-100 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 text-xs text-slate-500 overflow-x-auto whitespace-nowrap">
